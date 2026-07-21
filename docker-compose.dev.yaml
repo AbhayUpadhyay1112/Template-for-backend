@@ -1,7 +1,7 @@
 services:
   postgres:
     image: postgres:18
-    container_name: nestjs-app-postgres
+    container_name: mst-resolution-postgres
     restart: unless-stopped
     shm_size: 128mb
     ports:
@@ -13,7 +13,7 @@ services:
       - postgres:/var/lib/postgresql
   pgadmin:
     image: dpage/pgadmin4:9
-    container_name: nestjs-app-pgadmin
+    container_name: mst-resolution-pgadmin
     restart: unless-stopped
     ports:
       - ${PGADMIN_PORT}:80
@@ -24,7 +24,7 @@ services:
       - pgadmin:/var/lib/pgadmin
   redis:
     image: redis/redis-stack:7.4.0-v8
-    container_name: nestjs-app-redis
+    container_name: mst-resolution-redis
     restart: unless-stopped
     ports:
       - ${REDIS_PORT}:6379
@@ -35,7 +35,7 @@ services:
       - redis:/data
   mongo:
     image: mongo:8
-    container_name: nestjs-app-mongo
+    container_name: mst-resolution-mongo
     restart: unless-stopped
     ports:
       - ${MONGO_PORT}:27017
@@ -46,15 +46,15 @@ services:
     volumes:
       - mongo:/data/db
       - mongo-config:/data/configdb
-  nestjs-app:
-    image: nestjs-app-dev
+  mst-resolution:
+    image: mst-resolution-dev
     build:
       context: .
-      target: nestjs-app-dev
+      target: mst-resolution-dev
       args:
         - PORT:${PORT}
         - METRICS_PORT:${METRICS_PORT}
-    container_name: nestjs-app-dev
+    container_name: mst-resolution-dev
     restart: unless-stopped
     stop_grace_period: 600s
     ports:
@@ -64,18 +64,18 @@ services:
       - postgres
       - redis
     volumes:
-      - .:/nestjs-app/
+      - .:/mst-resolution/
 volumes:
   postgres:
-    name: nestjs-app-postgres
+    name: mst-resolution-postgres
   redis:
-    name: nestjs-app-redis
+    name: mst-resolution-redis
   mongo:
-    name: nestjs-app-mongo
+    name: mst-resolution-mongo
   mongo-config:
-    name: nestjs-app-mongo-config
+    name: mst-resolution-mongo-config
   pgadmin:
-    name: nestjs-app-pgadmin
+    name: mst-resolution-pgadmin
 networks:
   default:
-    name: nestjs-app
+    name: mst-resolution

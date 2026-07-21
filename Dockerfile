@@ -1,7 +1,7 @@
 # base image
 FROM node:24 AS base
 
-WORKDIR /nestjs-app
+WORKDIR /mst-resolution
 
 ARG PORT
 
@@ -21,12 +21,12 @@ EXPOSE ${PORT}
 EXPOSE ${METRICS_PORT}
 
 # development image
-FROM base AS nestjs-app-dev
+FROM base AS mst-resolution-dev
 
 CMD ["npm", "run", "start:dev"]
 
 # production image
-FROM base AS nestjs-app
+FROM base AS mst-resolution
 
 RUN npm run build
 

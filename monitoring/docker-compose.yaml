@@ -27,9 +27,9 @@ services:
       - grafana:/var/lib/grafana
 volumes:
   prometheus:
-    name: nestjs-app-prometheus
+    name: mst-resolution-prometheus
   grafana:
-    name: nestjs-app-grafana
+    name: mst-resolution-grafana
 networks:
   default:
-    name: nestjs-app-monitoring
+    name: mst-resolution-monitoring
