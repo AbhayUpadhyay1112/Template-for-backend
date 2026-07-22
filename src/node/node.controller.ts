@@ -1,12 +1,21 @@
 import {
-  Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe,
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  ParseIntPipe,
   UseGuards,
   Req,
+  Query,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
 import { NodesService } from './node.service';
 import { CreateNodeDto } from './dto/create-node.dto';
 import { UpdateNodeDto } from './dto/update-node.dto';
+import { NodeFilterDto } from './dto/node-filter.dto';
 import { NodeResponseDto } from './dto/node-response.dto';
 import {
   AccessGuard,
@@ -38,12 +47,12 @@ export class NodesController {
     return this.nodesService.create(dto);
   }
 
-  @Get()
-  @ApiOperation({ summary: 'Get all nodes' })
-  @ApiResponse({ status: 200, type: [NodeResponseDto] })
-  findAll() {
-    return this.nodesService.findAll();
-  }
+@Get()
+@ApiOperation({ summary: 'Get all nodes' })
+@ApiResponse({ status: 200, type: [NodeResponseDto] })
+findAll(@Query() filter: NodeFilterDto) {
+  return this.nodesService.findAll(filter);
+}
 
   @Get(':id')
   @ApiOperation({ summary: 'Get a node by ID' })
@@ -79,5 +88,16 @@ export class NodesController {
   @ApiResponse({ status: 404, description: 'Node not found' })
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.nodesService.remove(id);
+
   }
+
+  @Get('health/:network')
+  @ApiOperation({ summary: 'Get network type' })
+  @ApiParam({ name: 'network', type: String })
+  @ApiResponse({ status: 200, type: NodeResponseDto })
+  @ApiResponse({ status: 404, description: 'Node not found' })
+  async nodeHealth (@Param('network') network: string) {
+    return await this.nodesService.nodeHealth(network);
+  }
+
 }
