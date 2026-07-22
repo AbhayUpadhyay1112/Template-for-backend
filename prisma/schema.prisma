@@ -164,16 +164,28 @@ model SystemSetting {
   @@map("system_setting")
 }
 
+enum NodeTag {
+  Archive   @map("archive")
+  Full      @map("full")
+  RPC       @map("rpc")
+  Validator @map("validator")
+  Other     @map("other")
+
+  @@map("node_tag")
+}
+
 model Node {
-  id           Int         @id @default(autoincrement())
-  type         String
-  network      String
-  name         String
-  url          String      @unique
-  thumbnailImage String?   @map("thumbnail_image")
-  status       String     @default("active")
-  createdAt    DateTime    @default(now()) @map("created_at")
-  updatedAt    DateTime    @updatedAt @map("updated_at")
-  
+  id             Int      @id @default(autoincrement())
+  type           String
+  network        String
+  name           String
+  url            String   @unique
+  thumbnailImage String?  @map("thumbnail_image")
+  status         String   @default("active")
+  tag            NodeTag  @default(Other)
+  createdBy      Int?     @default(1)
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
   @@map("node")
 }

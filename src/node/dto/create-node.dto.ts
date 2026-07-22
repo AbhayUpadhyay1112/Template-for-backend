@@ -1,8 +1,20 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsUrl, IsOptional, IsEnum, IsNotEmpty } from 'class-validator';
+import {
+  IsString,
+  IsUrl,
+  IsOptional,
+  IsEnum,
+  IsNotEmpty,
+  isEnum,
+  IsNumber,
+} from 'class-validator';
+import { NodeTag } from 'src/generated/prisma/enums';
 
 export class CreateNodeDto {
-  @ApiProperty({ example: 'rpc', description: 'Node type e.g. node, rpc, archive' })
+  @ApiProperty({
+    example: 'rpc',
+    description: 'Node type e.g. node, rpc, archive',
+  })
   @IsString()
   @IsNotEmpty()
   type: string;
@@ -11,7 +23,6 @@ export class CreateNodeDto {
   @IsString()
   @IsNotEmpty()
   network: string;
-
 
   @ApiProperty({ example: 'Node 1' })
   @IsString()
@@ -28,9 +39,19 @@ export class CreateNodeDto {
   @IsString()
   thumbnailImage?: string;
 
-  @ApiPropertyOptional({example: 'active', description: 'Node status e.g. active, inactive, maintenance'  })
+  @ApiProperty({ enum: NodeTag })
+  @IsEnum(NodeTag)
+  tag: NodeTag;
+
+  @ApiProperty()
+  @IsNumber()
+  createdBy: number;
+
+  @ApiPropertyOptional({
+    example: 'active',
+    description: 'Node status e.g. active, inactive, maintenance',
+  })
   @IsString()
   @IsNotEmpty()
   status?: string;
-  
 }
