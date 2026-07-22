@@ -108,7 +108,46 @@ export class NodesService {
     return this.prisma.node.delete({ where: { id } });
   }
 
+  async nodeHealthDetailed(rpcUrl: string): Promise<any> {
+    const batch = [
+        { jsonrpc: '2.0', method: 'net_listening', params: [], id: 1 },
+        { jsonrpc: '2.0', method: 'net_peerCount', params: [], id: 2 },
+        { jsonrpc: '2.0', method: 'eth_syncing', params: [], id: 3 },
+        { jsonrpc: '2.0', method: 'eth_blockNumber', params: [], id: 4 },
+    ];
+
+    const { data } = await firstValueFrom(this.httpService.post(rpcUrl, batch, {
+                         headers: { 'Content-Type': 'application/json' },
+                      })
+                    );
+
+    // match by id — don't assume response order matches request order
+    const byId = Object.fromEntries(data.map((r:any) => [r?.id, r]));
+
+    const listening = byId[1].result;
+    const peerCount = parseInt(byId[2].result, 16);
+    const syncingRaw = byId[3].result;
+    const blockNumber = parseInt(byId[4].result || 0,16);
+    const sync = syncingRaw === false
+    ? { syncing: false }
+    : {
+      syncing: true,
+      startingBlock: parseInt(syncingRaw.startingBlock, 16),
+      currentBlock: parseInt(syncingRaw.currentBlock, 16),
+      highestBlock: parseInt(syncingRaw.highestBlock, 16),
+    };
+
+    return {
+    listening,
+    peerCount,
+    hasPeers: peerCount !== 0,
+    ...sync,
+    healthy: listening && peerCount !== 0 && !sync.syncing,
+    blockNumber
+    }
+  }
   async nodeHealth(network: string): Promise<any> {
+    let nodeObjects:any = [];
     const _nodes = await this.prisma.node.findMany({
       where: {
         network: {
@@ -123,26 +162,22 @@ export class NodesService {
       console.log('network', network);
 
       // Run all block-height fetches in parallel and wait for them all to finish
-      const results = await Promise.all(
+      await Promise.all(
         _nodes.map(async (_node) => {
-          const blockHeight = await this.getEVMBlockNumber(_node.id);
-          return { name: _node.name, healthy: true, blockHeight };
+          const healthDetails = await this.nodeHealthDetailed(_node.url);
+          console.log(healthDetails,JSON.stringify(healthDetails));
+          nodeObjects.push({ 
+                          name: _node.name, 
+                          healthy: healthDetails.healthy, 
+                          hasPeers: healthDetails.hasPeers, 
+                          listening: healthDetails.listening, 
+                          syncing: healthDetails.syncing, 
+                          peerCount: healthDetails.peerCount, 
+                          blockHeight: healthDetails.blockNumber });
         })
       );
 
-      console.log('network 2');
-
-      // Now compute maxHeight from the fully resolved results
-      const maxHeight = Math.max(...results.map(r => r.blockHeight));
-
-      const nodeObjects = results.map((_node) => ({
-        ..._node,
-        healthy: _node.blockHeight >= maxHeight - 5,
-      }));
-
-      console.log('network 3');
-
-      return { nodes: nodeObjects, maxHeight };
+      return { nodes: nodeObjects };
     } else {
       throw new Error(`NotFoundException: No active nodes found for network ${network}`);
     }
