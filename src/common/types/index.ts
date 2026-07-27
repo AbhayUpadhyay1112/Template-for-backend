@@ -60,11 +60,7 @@ export class EnvironmentVariables {
   @Min(1)
   @Max(65535)
   METRICS_PORT?: number;
-
 }
-
-
-
 
 /**
  * ExcludeUndefinedIf<ExcludeUndefined, T>

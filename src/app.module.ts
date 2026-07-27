@@ -14,6 +14,10 @@ import { PrismaModule } from './prisma';
 import { AuthModule } from './auth';
 import { RedisModule } from './redis';
 import { NodeModule } from './node/node.module';
+import { WalletModule } from './wallet/wallet.module';
+import { AssetModule } from './asset/asset.module';
+import { PlatformModule } from './platform/platform.module';
+import { ChainModule } from './chain/chain.module';
 
 @Module({
   imports: [
@@ -38,6 +42,10 @@ import { NodeModule } from './node/node.module';
     RedisModule,
     AuthModule,
     NodeModule,
+    WalletModule,
+    AssetModule,
+    PlatformModule,
+    ChainModule,
   ],
   controllers: [AppController],
   providers: [

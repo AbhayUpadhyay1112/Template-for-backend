@@ -11,7 +11,13 @@ import {
   Req,
   Query,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { NodesService } from './node.service';
 import { CreateNodeDto } from './dto/create-node.dto';
 import { UpdateNodeDto } from './dto/update-node.dto';
@@ -27,32 +33,35 @@ import {
   UserType,
 } from '@Common';
 
-
 @ApiTags('Nodes')
 @ApiBearerAuth()
 @Roles(UserType.Admin)
 @Controller('nodes')
 @UseGuards(JwtAuthGuard, AccessGuard, RolesGuard)
-
 export class NodesController {
   constructor(private readonly nodesService: NodesService) {}
 
   @Post()
   @ApiOperation({ summary: 'Create a new node' })
-  @ApiResponse({ status: 201, description: 'Node created', type: NodeResponseDto })
-  @ApiResponse({ status: 409, description: 'Node with this URL already exists' })
-  create(
-    @Req() req: AuthenticatedRequest,
-    @Body() dto: CreateNodeDto) {
+  @ApiResponse({
+    status: 201,
+    description: 'Node created',
+    type: NodeResponseDto,
+  })
+  @ApiResponse({
+    status: 409,
+    description: 'Node with this URL already exists',
+  })
+  create(@Req() req: AuthenticatedRequest, @Body() dto: CreateNodeDto) {
     return this.nodesService.create(dto);
   }
 
-@Get()
-@ApiOperation({ summary: 'Get all nodes' })
-@ApiResponse({ status: 200, type: [NodeResponseDto] })
-findAll(@Query() filter: NodeFilterDto) {
-  return this.nodesService.findAll(filter);
-}
+  @Get()
+  @ApiOperation({ summary: 'Get all nodes' })
+  @ApiResponse({ status: 200, type: [NodeResponseDto] })
+  findAll(@Query() filter: NodeFilterDto) {
+    return this.nodesService.findAll(filter);
+  }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get a node by ID' })
@@ -88,7 +97,6 @@ findAll(@Query() filter: NodeFilterDto) {
   @ApiResponse({ status: 404, description: 'Node not found' })
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.nodesService.remove(id);
-
   }
 
   @Get('health/:network')
@@ -96,8 +104,7 @@ findAll(@Query() filter: NodeFilterDto) {
   @ApiParam({ name: 'network', type: String })
   @ApiResponse({ status: 200, type: NodeResponseDto })
   @ApiResponse({ status: 404, description: 'Node not found' })
-  async nodeHealth (@Param('network') network: string) {
+  async nodeHealth(@Param('network') network: string) {
     return await this.nodesService.nodeHealth(network);
   }
-
 }

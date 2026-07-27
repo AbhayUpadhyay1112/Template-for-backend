@@ -59,7 +59,4 @@ export class RegisterUserRequestDto {
   @IsString()
   @IsNotEmpty()
   role: string;
-
-
-
 }

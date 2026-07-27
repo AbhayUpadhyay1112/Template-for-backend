@@ -6,5 +6,4 @@ export class SmsService {
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async send(mobile: string, text: string): Promise<void> {}
-  
 }

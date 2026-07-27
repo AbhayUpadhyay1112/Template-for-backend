@@ -12,8 +12,8 @@ import { OtpModule } from '../otp';
 @Module({
   imports: [
     AdminModule,
-    // UsersModule,
-    // OtpModule,
+    UsersModule,
+    OtpModule,
     JwtModule.registerAsync({
       useFactory: (config: ConfigType<typeof jwtConfigFactory>) => ({
         secret: config.secret,

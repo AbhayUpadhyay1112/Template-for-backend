@@ -5,7 +5,6 @@ import {
   IsOptional,
   IsEnum,
   IsNotEmpty,
-  isEnum,
   IsNumber,
 } from 'class-validator';
 import { NodeTag } from 'src/generated/prisma/enums';

@@ -29,7 +29,6 @@ export class AccessGuard implements CanActivate {
   }
 
   async validate(user: AuthenticatedUser) {
-   
     const cacheKey = getAccessGuardCacheKey(user);
     const cacheTtl = 300000;
 

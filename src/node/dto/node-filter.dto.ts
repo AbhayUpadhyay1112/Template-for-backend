@@ -17,7 +17,8 @@ export class NodeFilterDto {
   @ApiPropertyOptional({
     example: 10,
     required: false,
-    description: 'Number of items to take (pagination only applies when this or skip is provided)',
+    description:
+      'Number of items to take (pagination only applies when this or skip is provided)',
   })
   @IsOptional()
   @Type(() => Number)
