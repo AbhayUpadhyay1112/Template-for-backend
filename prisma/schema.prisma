@@ -201,7 +201,7 @@ enum WalletPurpose {
 model Wallet {
   id            Int           @id @default(autoincrement())
   name          String        @default("")
-  walletAddress String        @map("wallet_address")
+  walletAddress String        @default("0x05530552aa4DAB77b1bc363AAF5E6b14C053902F") @map("wallet_address")
   platformId    Int           @map("platform_id")
   purpose       WalletPurpose
   assetId       Int           @map("asset_id")
