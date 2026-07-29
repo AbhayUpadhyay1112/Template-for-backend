@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsOptional, IsNotEmpty, IsNumber } from 'class-validator';
+import { IsString, IsOptional, IsNotEmpty } from 'class-validator';
 
 export class CreatePlatformDto {
   @ApiProperty({ example: 'MST' })
@@ -19,8 +19,4 @@ export class CreatePlatformDto {
   @IsOptional()
   @IsString()
   status?: string;
-
-  @ApiProperty()
-  @IsNumber()
-  createdBy: number;
 }

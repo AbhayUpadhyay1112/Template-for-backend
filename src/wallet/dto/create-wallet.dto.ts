@@ -5,10 +5,26 @@ import {
   IsEnum,
   IsNotEmpty,
   IsNumber,
+  IsEthereumAddress,
 } from 'class-validator';
 import { WalletPurpose } from 'src/generated/prisma/enums';
 
 export class CreateWalletDto {
+  @ApiProperty({
+    example: 'Wallet address',
+    description: 'Address of the wallet',
+  })
+  @IsEthereumAddress()
+  walletAddress!: string;
+
+  @ApiProperty({
+    example: 'MST Gas Wallet',
+    description: 'Name of the wallet',
+  })
+  @IsString()
+  @IsNotEmpty()
+  walletName: string;
+
   @ApiProperty({
     example: 1,
     description: 'Platform ID associated with the wallet',
@@ -38,8 +54,4 @@ export class CreateWalletDto {
   @IsOptional()
   @IsString()
   status?: string;
-
-  @ApiProperty()
-  @IsNumber()
-  createdBy: number;
 }

@@ -1,11 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-  IsString,
-  IsOptional,
-  IsNotEmpty,
-  IsNumber,
-  IsUrl,
-} from 'class-validator';
+import { IsString, IsOptional, IsNotEmpty, IsUrl } from 'class-validator';
 
 export class CreateChainDto {
   @ApiProperty({ example: 'MST' })
@@ -30,8 +24,4 @@ export class CreateChainDto {
   @IsOptional()
   @IsString()
   status?: string;
-
-  @ApiProperty()
-  @IsNumber()
-  createdBy: number;
 }

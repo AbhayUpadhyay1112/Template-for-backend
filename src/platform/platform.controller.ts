@@ -46,7 +46,7 @@ export class PlatformController {
     description: 'Platform created',
   })
   create(@Req() req: AuthenticatedRequest, @Body() dto: CreatePlatformDto) {
-    return this.platformService.create(dto);
+    return this.platformService.create(dto, req.user.id);
   }
 
   @Get()
@@ -86,10 +86,11 @@ export class PlatformController {
     description: 'Platform not found',
   })
   update(
+    @Req() req: AuthenticatedRequest,
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdatePlatformDto,
   ) {
-    return this.platformService.update(id, dto);
+    return this.platformService.update(id, dto, req.user.id);
   }
 
   @Delete(':id')

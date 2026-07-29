@@ -7,7 +7,7 @@ import { UpdateWalletDto } from './dto/update-wallet.dto';
 export class WalletService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(dto: CreateWalletDto) {
+  async create(dto: CreateWalletDto, userId: number) {
     const platform = await this.prisma.platform.findUnique({
       where: { id: dto.platformId },
     });
@@ -29,11 +29,13 @@ export class WalletService {
     try {
       return await this.prisma.wallet.create({
         data: {
+          name: dto.walletName,
+          walletAddress: dto.walletAddress,
           platformId: dto.platformId,
           purpose: dto.purpose,
           assetId: dto.assetId,
           status: dto.status,
-          createdBy: dto.createdBy,
+          createdBy: userId,
         },
         include: {
           platform: true,
@@ -90,7 +92,7 @@ export class WalletService {
     return wallet;
   }
 
-  async update(id: number, dto: UpdateWalletDto) {
+  async update(id: number, dto: UpdateWalletDto, userId: number) {
     await this.findOne(id);
 
     if (dto.platformId !== undefined) {
@@ -118,7 +120,15 @@ export class WalletService {
     try {
       return await this.prisma.wallet.update({
         where: { id },
-        data: dto,
+        data: {
+          name: dto.walletName,
+          walletAddress: dto.walletAddress,
+          platformId: dto.platformId,
+          purpose: dto.purpose,
+          assetId: dto.assetId,
+          status: dto.status,
+          updatedBy: userId,
+        },
         include: {
           platform: true,
           asset: {

@@ -17,14 +17,14 @@ export class PlatformService {
       .replace(/^-|-$/g, '');
   }
 
-  async create(dto: CreatePlatformDto) {
+  async create(dto: CreatePlatformDto, userId: number) {
     try {
       return await this.prisma.platform.create({
         data: {
           name: dto.name,
           slug: this.generateSlug(dto.slug),
           status: dto.status,
-          createdBy: dto.createdBy,
+          createdBy: userId,
         },
       });
     } catch (err) {
@@ -52,7 +52,7 @@ export class PlatformService {
     return platform;
   }
 
-  async update(id: number, dto: UpdatePlatformDto) {
+  async update(id: number, dto: UpdatePlatformDto, userId: number) {
     await this.findOne(id);
 
     try {
@@ -63,6 +63,7 @@ export class PlatformService {
           ...(dto.slug && {
             slug: this.generateSlug(dto.slug),
           }),
+          updatedBy: userId,
         },
       });
     } catch (err) {

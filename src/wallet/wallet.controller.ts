@@ -46,7 +46,7 @@ export class WalletController {
     description: 'Wallet created',
   })
   create(@Req() req: AuthenticatedRequest, @Body() dto: CreateWalletDto) {
-    return this.walletService.create(dto);
+    return this.walletService.create(dto, req.user.id);
   }
 
   @Get()
@@ -85,8 +85,12 @@ export class WalletController {
     status: 404,
     description: 'Wallet not found',
   })
-  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateWalletDto) {
-    return this.walletService.update(id, dto);
+  update(
+    @Req() req: AuthenticatedRequest,
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateWalletDto,
+  ) {
+    return this.walletService.update(id, dto, req.user.id);
   }
 
   @Delete(':id')

@@ -20,7 +20,7 @@ export class AdminService {
   constructor(
     @Inject(adminConfigFactory.KEY)
     private readonly config: ConfigType<typeof adminConfigFactory>,
-    @Inject(CACHE_MANAGER) private cacheManager: Cache,
+    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
     private readonly prisma: PrismaService,
     private readonly utilsService: UtilsService,
     private readonly storageService: StorageService,

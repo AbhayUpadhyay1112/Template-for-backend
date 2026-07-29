@@ -9,7 +9,7 @@ import { EnvironmentVariables } from '@Common';
 
 @Injectable()
 export class RedisService implements OnModuleInit, OnApplicationShutdown {
-  client: Redis;
+  client: Redis | undefined;
 
   constructor(
     private readonly configService: ConfigService<EnvironmentVariables, true>,

@@ -7,7 +7,7 @@ import { UpdateChainDto } from './dto/update-chain.dto';
 export class ChainService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(dto: CreateChainDto) {
+  async create(dto: CreateChainDto, userId: number) {
     try {
       return await this.prisma.chain.create({
         data: {
@@ -15,7 +15,7 @@ export class ChainService {
           rpc: dto.rpc,
           fallbackRpc: dto.fallbackRpc,
           status: dto.status,
-          createdBy: dto.createdBy,
+          createdBy: userId,
         },
       });
     } catch (err) {
@@ -46,13 +46,16 @@ export class ChainService {
     return chain;
   }
 
-  async update(id: number, dto: UpdateChainDto) {
+  async update(id: number, dto: UpdateChainDto, userId: number) {
     await this.findOne(id);
 
     try {
       return await this.prisma.chain.update({
         where: { id },
-        data: dto,
+        data: {
+          ...dto,
+          updatedBy: userId,
+        },
       });
     } catch (err) {
       throw err;

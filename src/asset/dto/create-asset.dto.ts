@@ -33,8 +33,4 @@ export class CreateAssetDto {
   @IsOptional()
   @IsString()
   status?: string;
-
-  @ApiProperty()
-  @IsNumber()
-  createdBy: number;
 }

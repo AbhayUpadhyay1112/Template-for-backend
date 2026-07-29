@@ -46,7 +46,7 @@ export class ChainController {
     description: 'Chain created',
   })
   create(@Req() req: AuthenticatedRequest, @Body() dto: CreateChainDto) {
-    return this.chainService.create(dto);
+    return this.chainService.create(dto, req.user.id);
   }
 
   @Get()
@@ -85,8 +85,12 @@ export class ChainController {
     status: 404,
     description: 'Chain not found',
   })
-  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateChainDto) {
-    return this.chainService.update(id, dto);
+  update(
+    @Req() req: AuthenticatedRequest,
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateChainDto,
+  ) {
+    return this.chainService.update(id, dto, req.user.id);
   }
 
   @Delete(':id')

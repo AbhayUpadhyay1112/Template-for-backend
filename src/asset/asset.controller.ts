@@ -46,7 +46,7 @@ export class AssetController {
     description: 'Asset created',
   })
   create(@Req() req: AuthenticatedRequest, @Body() dto: CreateAssetDto) {
-    return this.assetService.create(dto);
+    return this.assetService.create(dto, req.user.id);
   }
 
   @Get()
@@ -85,8 +85,12 @@ export class AssetController {
     status: 404,
     description: 'Asset not found',
   })
-  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateAssetDto) {
-    return this.assetService.update(id, dto);
+  update(
+    @Req() req: AuthenticatedRequest,
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateAssetDto,
+  ) {
+    return this.assetService.update(id, dto, req.user.id);
   }
 
   @Delete(':id')

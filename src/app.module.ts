@@ -18,6 +18,7 @@ import { WalletModule } from './wallet/wallet.module';
 import { AssetModule } from './asset/asset.module';
 import { PlatformModule } from './platform/platform.module';
 import { ChainModule } from './chain/chain.module';
+import { ActionModule } from './action/action.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { ChainModule } from './chain/chain.module';
     AssetModule,
     PlatformModule,
     ChainModule,
+    ActionModule,
   ],
   controllers: [AppController],
   providers: [

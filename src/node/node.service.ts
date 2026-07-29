@@ -159,7 +159,7 @@ export class NodesService {
               currentBlock: parseInt(syncingRaw.currentBlock, 16),
               highestBlock: parseInt(syncingRaw.highestBlock, 16),
             };
-
+      console.log('nodeHealthDetailed', JSON.stringify(sync));
       return {
         listening,
         peerCount,
@@ -175,7 +175,7 @@ export class NodesService {
     }
   }
   async nodeHealth(network: string): Promise<any> {
-    let nodeObjects: any = [];
+    const nodeObjects: any = [];
     const _nodes = await this.prisma.node.findMany({
       where: {
         network: {
@@ -199,6 +199,15 @@ export class NodesService {
                 hasPeers: healthDetails.hasPeers,
                 listening: healthDetails.listening,
                 syncing: healthDetails.syncing,
+                startingBlock: healthDetails.syncing
+                  ? healthDetails.startingBlock
+                  : false,
+                currentBlock: healthDetails.syncing
+                  ? healthDetails.currentBlock
+                  : false,
+                highestBlock: healthDetails.syncing
+                  ? healthDetails.highestBlock
+                  : false,
                 peerCount: healthDetails.peerCount,
                 blockHeight: healthDetails.blockNumber,
               });
@@ -211,7 +220,7 @@ export class NodesService {
           }
         }),
       );
-
+      console.log(nodeObjects);
       return { nodes: nodeObjects };
     } else {
       throw new Error(

@@ -7,7 +7,7 @@ import { UpdateAssetDto } from './dto/update-asset.dto';
 export class AssetService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(dto: CreateAssetDto) {
+  async create(dto: CreateAssetDto, userId: number) {
     const chain = await this.prisma.chain.findUnique({
       where: { id: dto.chainId },
     });
@@ -24,7 +24,7 @@ export class AssetService {
           address: dto.address,
           isNative: dto.isNative,
           status: dto.status,
-          createdBy: dto.createdBy,
+          createdBy: userId,
         },
         include: {
           chain: true,
@@ -64,7 +64,7 @@ export class AssetService {
     return asset;
   }
 
-  async update(id: number, dto: UpdateAssetDto) {
+  async update(id: number, dto: UpdateAssetDto, userId: number) {
     await this.findOne(id);
 
     if (dto.chainId !== undefined) {
@@ -80,7 +80,10 @@ export class AssetService {
     try {
       return await this.prisma.asset.update({
         where: { id },
-        data: dto,
+        data: {
+          ...dto,
+          updatedBy: userId,
+        },
         include: {
           chain: true,
         },
