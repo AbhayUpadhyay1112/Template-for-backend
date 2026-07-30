@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
@@ -20,11 +21,11 @@ import {
 @Injectable()
 export class NodesService {
   constructor(
-    private prisma: PrismaService,
+    private readonly prisma: PrismaService,
     private readonly httpService: HttpService,
   ) {}
 
-  async create(dto: CreateNodeDto) {
+  async create(dto: CreateNodeDto, id: number) {
     try {
       return await this.prisma.node.create({
         data: {
@@ -35,11 +36,55 @@ export class NodesService {
           thumbnailImage: dto.thumbnailImage,
           status: dto.status,
           tag: dto.tag,
+          createdBy: id,
         },
       });
     } catch (err) {
       throw err;
     }
+  }
+
+  // Merge health details with each node
+  private async mergeNodeHealth(nodes: any[]) {
+    return Promise.all(
+      nodes.map(async (node) => {
+        try {
+          const healthDetails = await this.nodeHealthDetailed(node.url);
+
+          return {
+            ...node,
+            healthy: healthDetails.healthy,
+            hasPeers: healthDetails.hasPeers,
+            listening: healthDetails.listening,
+            syncing: healthDetails.syncing,
+            startingBlock: healthDetails.syncing
+              ? healthDetails.startingBlock
+              : false,
+            currentBlock: healthDetails.syncing
+              ? healthDetails.currentBlock
+              : false,
+            highestBlock: healthDetails.syncing
+              ? healthDetails.highestBlock
+              : false,
+            peerCount: healthDetails.peerCount,
+            blockHeight: healthDetails.blockNumber,
+          };
+        } catch (err) {
+          return {
+            ...node,
+            healthy: false,
+            hasPeers: false,
+            listening: false,
+            syncing: false,
+            startingBlock: false,
+            currentBlock: false,
+            highestBlock: false,
+            peerCount: 0,
+            blockHeight: null,
+          };
+        }
+      }),
+    );
   }
 
   async findAll(filter: NodeFilterDto) {
@@ -53,24 +98,35 @@ export class NodesService {
 
     const isPaginated = filter.skip != null || filter.take != null;
 
+    // Without pagination
     if (!isPaginated) {
-      const data = await this.prisma.node.findMany({
+      const nodes = await this.prisma.node.findMany({
         where,
         orderBy: { createdAt: 'desc' },
       });
 
-      return { count, data };
+      // Merge health data with nodes
+      const data = await this.mergeNodeHealth(nodes);
+
+      return {
+        count,
+        data,
+      };
     }
 
+    // With pagination
     const skip = filter.skip ?? 0;
     const take = filter.take ?? 10;
 
-    const data = await this.prisma.node.findMany({
+    const nodes = await this.prisma.node.findMany({
       where,
       skip,
       take,
       orderBy: { createdAt: 'desc' },
     });
+
+    // Merge health data with nodes
+    const data = await this.mergeNodeHealth(nodes);
 
     return {
       count,
@@ -79,16 +135,27 @@ export class NodesService {
       data,
     };
   }
+
   async findOne(id: number) {
-    const node = await this.prisma.node.findUnique({ where: { id } });
-    if (!node) throw new NotFoundException(`Node with id ${id} not found`);
+    const node = await this.prisma.node.findUnique({
+      where: { id },
+    });
+
+    if (!node) {
+      throw new NotFoundException(`Node with id ${id} not found`);
+    }
+
     return node;
   }
 
   async update(id: number, dto: UpdateNodeDto) {
     await this.findOne(id);
+
     try {
-      return await this.prisma.node.update({ where: { id }, data: dto });
+      return await this.prisma.node.update({
+        where: { id },
+        data: dto,
+      });
     } catch (err) {
       throw err;
     }
@@ -96,6 +163,7 @@ export class NodesService {
 
   async getEVMBlockNumber(id: number): Promise<number> {
     const node = await this.findOne(id);
+
     if (node) {
       const rpcUrl = node.url;
 
@@ -109,10 +177,9 @@ export class NodesService {
           }),
         );
 
-        const hexBlockNumber = response?.data?.result; // e.g. "0x112a880"
-        return parseInt(hexBlockNumber, 16); // decimal, e.g. 18012288
+        const hexBlockNumber = response?.data?.result;
+        return parseInt(hexBlockNumber, 16);
       } catch (err: any) {
-        //console.error(`Error fetching block number for node ${id}:`, err.message);
         throw new NotFoundException(
           `RPC Url ${id} is not responding as expected`,
         );
@@ -124,42 +191,73 @@ export class NodesService {
 
   async remove(id: number) {
     await this.findOne(id);
-    return this.prisma.node.delete({ where: { id } });
+
+    return this.prisma.node.delete({
+      where: { id },
+    });
   }
 
   async nodeHealthDetailed(rpcUrl: string): Promise<any> {
     try {
       const batch = [
-        { jsonrpc: '2.0', method: 'net_listening', params: [], id: 1 },
-        { jsonrpc: '2.0', method: 'net_peerCount', params: [], id: 2 },
-        { jsonrpc: '2.0', method: 'eth_syncing', params: [], id: 3 },
-        { jsonrpc: '2.0', method: 'eth_blockNumber', params: [], id: 4 },
+        {
+          jsonrpc: '2.0',
+          method: 'net_listening',
+          params: [],
+          id: 1,
+        },
+        {
+          jsonrpc: '2.0',
+          method: 'net_peerCount',
+          params: [],
+          id: 2,
+        },
+        {
+          jsonrpc: '2.0',
+          method: 'eth_syncing',
+          params: [],
+          id: 3,
+        },
+        {
+          jsonrpc: '2.0',
+          method: 'eth_blockNumber',
+          params: [],
+          id: 4,
+        },
       ];
 
       const { data } = await firstValueFrom(
         this.httpService.post(rpcUrl, batch, {
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+          },
           timeout: 5000,
         }),
       );
 
-      // match by id — don't assume response order matches request order
+      // Match by id — don't assume response order matches request order
       const byId = Object.fromEntries(data.map((r: any) => [r?.id, r]));
 
       const listening = byId[1].result;
+
       const peerCount = parseInt(byId[2].result, 16);
+
       const syncingRaw = byId[3].result;
+
       const blockNumber = parseInt(byId[4].result || 0, 16);
+
       const sync =
         syncingRaw === false
-          ? { syncing: false }
+          ? {
+              syncing: false,
+            }
           : {
               syncing: true,
               startingBlock: parseInt(syncingRaw.startingBlock, 16),
               currentBlock: parseInt(syncingRaw.currentBlock, 16),
               highestBlock: parseInt(syncingRaw.highestBlock, 16),
             };
-      console.log('nodeHealthDetailed', JSON.stringify(sync));
+
       return {
         listening,
         peerCount,
@@ -174,8 +272,10 @@ export class NodesService {
       );
     }
   }
+
   async nodeHealth(network: string): Promise<any> {
     const nodeObjects: any = [];
+
     const _nodes = await this.prisma.node.findMany({
       where: {
         network: {
@@ -185,13 +285,15 @@ export class NodesService {
         status: 'active',
       },
     });
+
     if (_nodes.length) {
-      // Run all block-height fetches in parallel and wait for them all to finish
       await Promise.allSettled(
         _nodes.map(async (_node) => {
           try {
             console.log('node', _node.name, _node.url);
+
             const healthDetails = await this.nodeHealthDetailed(_node.url);
+
             if (healthDetails) {
               nodeObjects.push({
                 name: _node.name,
@@ -220,8 +322,12 @@ export class NodesService {
           }
         }),
       );
+
       console.log(nodeObjects);
-      return { nodes: nodeObjects };
+
+      return {
+        nodes: nodeObjects,
+      };
     } else {
       throw new Error(
         `NotFoundException: No active nodes found for network ${network}`,

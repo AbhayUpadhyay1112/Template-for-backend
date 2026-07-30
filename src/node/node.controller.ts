@@ -53,7 +53,7 @@ export class NodesController {
     description: 'Node with this URL already exists',
   })
   create(@Req() req: AuthenticatedRequest, @Body() dto: CreateNodeDto) {
-    return this.nodesService.create(dto);
+    return this.nodesService.create(dto, req.user.id);
   }
 
   @Get()

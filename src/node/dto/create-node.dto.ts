@@ -42,10 +42,6 @@ export class CreateNodeDto {
   @IsEnum(NodeTag)
   tag: NodeTag;
 
-  @ApiProperty()
-  @IsNumber()
-  createdBy: number;
-
   @ApiPropertyOptional({
     example: 'active',
     description: 'Node status e.g. active, inactive, maintenance',
