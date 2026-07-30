@@ -48,11 +48,13 @@ export class NodesService {
   private async mergeNodeHealth(nodes: any[]) {
     return Promise.all(
       nodes.map(async (node) => {
+        const { url, ...nodeData } = node;
+
         try {
-          const healthDetails = await this.nodeHealthDetailed(node.url);
+          const healthDetails = await this.nodeHealthDetailed(url);
 
           return {
-            ...node,
+            ...nodeData,
             healthy: healthDetails.healthy,
             hasPeers: healthDetails.hasPeers,
             listening: healthDetails.listening,
@@ -71,7 +73,7 @@ export class NodesService {
           };
         } catch (err) {
           return {
-            ...node,
+            ...nodeData,
             healthy: false,
             hasPeers: false,
             listening: false,
@@ -86,7 +88,6 @@ export class NodesService {
       }),
     );
   }
-
   async findAll(filter: NodeFilterDto) {
     const where: any = {};
 
@@ -103,6 +104,16 @@ export class NodesService {
       const nodes = await this.prisma.node.findMany({
         where,
         orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          type: true,
+          network: true,
+          name: true,
+          url: true, // mergeNodeHealth() ke liye
+          thumbnailImage: true,
+          status: true,
+          tag: true,
+        },
       });
 
       // Merge health data with nodes
@@ -123,6 +134,16 @@ export class NodesService {
       skip,
       take,
       orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        type: true,
+        network: true,
+        name: true,
+        url: true, // mergeNodeHealth() ke liye internally chahiye
+        thumbnailImage: true,
+        status: true,
+        tag: true,
+      },
     });
 
     // Merge health data with nodes
