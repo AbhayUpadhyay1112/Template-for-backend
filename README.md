@@ -120,7 +120,7 @@ $ npm run db:schema:constraints
 # add constraints for the specific table
 $ npm run db:schema:constraints:only <table name> # i.e. `npm run db:schema:constraints:only user` to add constraints into the user table
 
-# generate client with schema
+# generate client with schemaa
 $ npm run db:client:generate
 
 # push schema changes to the database without migration
