@@ -11,6 +11,7 @@ export class ChainService {
     try {
       return await this.prisma.chain.create({
         data: {
+          chainId: dto.chainId,
           chainName: dto.chainName,
           rpc: dto.rpc,
           fallbackRpc: dto.fallbackRpc,

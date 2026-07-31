@@ -49,4 +49,19 @@ export class CreateNodeDto {
   @IsString()
   @IsNotEmpty()
   status?: string;
+  @ApiPropertyOptional({
+    example: '0x1234567890abcdef...',
+    description: 'Consensus Address',
+  })
+  @IsOptional()
+  @IsString()
+  consensusAddress?: string;
+
+  @ApiPropertyOptional({
+    example: '0xabcdef1234567890...',
+    description: 'Validator Address',
+  })
+  @IsOptional()
+  @IsString()
+  validatorAddress?: string;
 }

@@ -18,6 +18,12 @@ export class NodeResponseDto {
   @ApiPropertyOptional()
   thumbnailImage?: string | null;
 
+  @ApiPropertyOptional()
+  consensusAddress?: string | null;
+
+  @ApiPropertyOptional()
+  validatorAddress?: string | null;
+
   @ApiProperty()
   status: string;
 

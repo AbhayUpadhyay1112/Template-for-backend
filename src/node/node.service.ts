@@ -34,6 +34,8 @@ export class NodesService {
           network: dto.network,
           url: dto.url,
           thumbnailImage: dto.thumbnailImage,
+          consensusAddress: dto.consensusAddress,
+          validatorAddress: dto.validatorAddress,
           status: dto.status,
           tag: dto.tag,
           createdBy: id,
@@ -43,7 +45,6 @@ export class NodesService {
       throw err;
     }
   }
-
   // Merge health details with each node
   private async mergeNodeHealth(nodes: any[]) {
     return Promise.all(
@@ -111,6 +112,8 @@ export class NodesService {
           name: true,
           url: true, // mergeNodeHealth() ke liye
           thumbnailImage: true,
+          consensusAddress: true,
+          validatorAddress: true,
           status: true,
           tag: true,
         },
@@ -141,6 +144,8 @@ export class NodesService {
         name: true,
         url: true, // mergeNodeHealth() ke liye internally chahiye
         thumbnailImage: true,
+        consensusAddress: true,
+        validatorAddress: true,
         status: true,
         tag: true,
       },
@@ -160,17 +165,74 @@ export class NodesService {
   async findOne(id: number) {
     const node = await this.prisma.node.findUnique({
       where: { id },
+      select: {
+        id: true,
+        type: true,
+        network: true,
+        name: true,
+        url: true,
+        thumbnailImage: true,
+        consensusAddress: true,
+        validatorAddress: true,
+        status: true,
+        tag: true,
+        createdBy: true,
+        createdAt: true,
+        updatedAt: true,
+      },
     });
 
     if (!node) {
       throw new NotFoundException(`Node with id ${id} not found`);
     }
 
-    return node;
+    const { url, ...nodeData } = node;
+
+    try {
+      const healthDetails = await this.nodeHealthDetailed(url);
+
+      return {
+        ...nodeData,
+        healthy: healthDetails.healthy,
+        hasPeers: healthDetails.hasPeers,
+        listening: healthDetails.listening,
+        syncing: healthDetails.syncing,
+        startingBlock: healthDetails.syncing
+          ? healthDetails.startingBlock
+          : false,
+        currentBlock: healthDetails.syncing
+          ? healthDetails.currentBlock
+          : false,
+        highestBlock: healthDetails.syncing
+          ? healthDetails.highestBlock
+          : false,
+        peerCount: healthDetails.peerCount,
+        blockHeight: healthDetails.blockNumber,
+      };
+    } catch {
+      return {
+        ...nodeData,
+        healthy: false,
+        hasPeers: false,
+        listening: false,
+        syncing: false,
+        startingBlock: false,
+        currentBlock: false,
+        highestBlock: false,
+        peerCount: 0,
+        blockHeight: null,
+      };
+    }
   }
 
   async update(id: number, dto: UpdateNodeDto) {
-    await this.findOne(id);
+    const node = await this.prisma.node.findUnique({
+      where: { id },
+    });
+
+    if (!node) {
+      throw new NotFoundException(`Node with id ${id} not found`);
+    }
 
     try {
       return await this.prisma.node.update({
@@ -181,9 +243,16 @@ export class NodesService {
       throw err;
     }
   }
-
   async getEVMBlockNumber(id: number): Promise<number> {
-    const node = await this.findOne(id);
+    const node = await this.prisma.node.findUnique({
+      where: { id },
+    });
+
+    if (!node) {
+      throw new NotFoundException(`Node with id ${id} not found`);
+    }
+
+    const rpcUrl = node.url;
 
     if (node) {
       const rpcUrl = node.url;
@@ -211,9 +280,15 @@ export class NodesService {
   }
 
   async remove(id: number) {
-    await this.findOne(id);
+    const node = await this.prisma.node.findUnique({
+      where: { id },
+    });
 
-    return this.prisma.node.delete({
+    if (!node) {
+      throw new NotFoundException(`Node with id ${id} not found`);
+    }
+
+    return await this.prisma.node.delete({
       where: { id },
     });
   }

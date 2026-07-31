@@ -2,10 +2,15 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateWalletDto } from './dto/create-wallet.dto';
 import { UpdateWalletDto } from './dto/update-wallet.dto';
+import { CreateTransactionDto } from './dto/create-transaction.dto';
+import { KMSEVMSigner } from 'src/kms-evm-signer';
 
 @Injectable()
 export class WalletService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly KMSEVMSigner: KMSEVMSigner,
+  ) {}
 
   async create(dto: CreateWalletDto, userId: number) {
     const platform = await this.prisma.platform.findUnique({
@@ -47,6 +52,7 @@ export class WalletService {
         },
       });
     } catch (err) {
+      console.log(err);
       throw err;
     }
   }
@@ -139,6 +145,7 @@ export class WalletService {
         },
       });
     } catch (err) {
+      console.log(err);
       throw err;
     }
   }
@@ -149,5 +156,26 @@ export class WalletService {
     return this.prisma.wallet.delete({
       where: { id },
     });
+  }
+
+  async signTransaction(dto: CreateTransactionDto) {
+    const chainDetails = await this.prisma.chain.findUnique({
+      where: { id: dto.chainId },
+    });
+
+    if (!chainDetails) {
+      throw new NotFoundException(`Chain with id ${dto.chainId} not found`);
+    }
+    const { rpc, chainId } = chainDetails;
+
+    const txHash = await this.KMSEVMSigner.sendRawTransaction({
+      rpcUrl: rpc,
+      to: dto.to,
+      value: BigInt(dto.value),
+      data: dto.data || '0x',
+      chainId: chainId,
+    });
+
+    return { txHash };
   }
 }

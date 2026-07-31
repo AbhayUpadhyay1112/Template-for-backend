@@ -175,17 +175,19 @@ enum NodeTag {
 }
 
 model Node {
-  id             Int      @id @default(autoincrement())
-  type           String
-  network        String
-  name           String
-  url            String   @unique
-  thumbnailImage String?  @map("thumbnail_image")
-  status         String   @default("active")
-  tag            NodeTag  @default(Other)
-  createdBy      Int?     @default(1)
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+  id               Int      @id @default(autoincrement())
+  type             String
+  network          String
+  name             String
+  url              String   @unique
+  thumbnailImage   String?  @map("thumbnail_image")
+  consensusAddress String?  @map("consensus_address")
+  validatorAddress String?  @map("validator_address")
+  status           String   @default("active")
+  tag              NodeTag  @default(Other)
+  createdBy        Int?     @default(1)
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
 
   @@map("node")
 }
@@ -235,6 +237,7 @@ model Platform {
 
 model Chain {
   id          Int      @id @default(autoincrement())
+  chainId     Int      @default(1) @map("chain_id")
   chainName   String   @map("chain_name")
   rpc         String
   fallbackRpc String?  @map("fallback_rpc")
