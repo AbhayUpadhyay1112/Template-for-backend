@@ -17,12 +17,16 @@ import {
   VALIDATOR_SET_ABI,
   VALIDATOR_SET_ADDRESS,
 } from './mst.constants';
+import { ethers } from 'ethers';
+import { EntityType, NodeTag } from 'src/generated/prisma/enums';
+import { UtilsService } from '@Common';
 
 @Injectable()
 export class NodesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly httpService: HttpService,
+    private readonly utilsService: UtilsService,
   ) {}
 
   async create(dto: CreateNodeDto, id: number) {
@@ -34,8 +38,9 @@ export class NodesService {
           network: dto.network,
           url: dto.url,
           thumbnailImage: dto.thumbnailImage,
-          consensusAddress: dto.consensusAddress,
-          validatorAddress: dto.validatorAddress,
+          minerAddress: dto.minerAddress,
+          contractAddress: dto.contractAddress,
+          operatorAddress: dto.operatorAddress,
           status: dto.status,
           tag: dto.tag,
           createdBy: id,
@@ -45,50 +50,7 @@ export class NodesService {
       throw err;
     }
   }
-  // Merge health details with each node
-  private async mergeNodeHealth(nodes: any[]) {
-    return Promise.all(
-      nodes.map(async (node) => {
-        const { url, ...nodeData } = node;
 
-        try {
-          const healthDetails = await this.nodeHealthDetailed(url);
-
-          return {
-            ...nodeData,
-            healthy: healthDetails.healthy,
-            hasPeers: healthDetails.hasPeers,
-            listening: healthDetails.listening,
-            syncing: healthDetails.syncing,
-            startingBlock: healthDetails.syncing
-              ? healthDetails.startingBlock
-              : false,
-            currentBlock: healthDetails.syncing
-              ? healthDetails.currentBlock
-              : false,
-            highestBlock: healthDetails.syncing
-              ? healthDetails.highestBlock
-              : false,
-            peerCount: healthDetails.peerCount,
-            blockHeight: healthDetails.blockNumber,
-          };
-        } catch (err) {
-          return {
-            ...nodeData,
-            healthy: false,
-            hasPeers: false,
-            listening: false,
-            syncing: false,
-            startingBlock: false,
-            currentBlock: false,
-            highestBlock: false,
-            peerCount: 0,
-            blockHeight: null,
-          };
-        }
-      }),
-    );
-  }
   async findAll(filter: NodeFilterDto) {
     const where: any = {};
 
@@ -112,8 +74,9 @@ export class NodesService {
           name: true,
           url: true, // mergeNodeHealth() ke liye
           thumbnailImage: true,
-          consensusAddress: true,
-          validatorAddress: true,
+          minerAddress: true,
+          contractAddress: true,
+          operatorAddress: true,
           status: true,
           tag: true,
         },
@@ -144,8 +107,9 @@ export class NodesService {
         name: true,
         url: true, // mergeNodeHealth() ke liye internally chahiye
         thumbnailImage: true,
-        consensusAddress: true,
-        validatorAddress: true,
+        minerAddress: true,
+        operatorAddress: true,
+        contractAddress: true,
         status: true,
         tag: true,
       },
@@ -172,8 +136,9 @@ export class NodesService {
         name: true,
         url: true,
         thumbnailImage: true,
-        consensusAddress: true,
-        validatorAddress: true,
+        minerAddress: true,
+        contractAddress: true,
+        operatorAddress: true,
         status: true,
         tag: true,
         createdBy: true,
@@ -243,6 +208,66 @@ export class NodesService {
       throw err;
     }
   }
+
+  async remove(id: number) {
+    const node = await this.prisma.node.findUnique({
+      where: { id },
+    });
+
+    if (!node) {
+      throw new NotFoundException(`Node with id ${id} not found`);
+    }
+
+    return await this.prisma.node.delete({
+      where: { id },
+    });
+  }
+
+  private getProvider(customRpc: string) {
+    try {
+      const provider = new ethers.JsonRpcProvider(customRpc);
+      return provider;
+    } catch (err) {
+      console.log(`RPC failed (${customRpc}): ${err.message}`);
+    }
+  }
+
+  private async getValidatorJAILStatus(
+    network: string,
+    rpcUrl: string,
+    validatorAddress: string,
+  ) {
+    const STAKE_HUB_ABI = [
+      {
+        inputs: [
+          { internalType: 'address', name: 'operatorAddress', type: 'address' },
+        ],
+        name: 'getValidatorBasicInfo',
+        outputs: [
+          { internalType: 'uint256', name: 'createdTime', type: 'uint256' },
+          { internalType: 'bool', name: 'jailed', type: 'bool' },
+          { internalType: 'uint256', name: 'jailUntil', type: 'uint256' },
+        ],
+        stateMutability: 'view',
+        type: 'function',
+      },
+    ];
+    //Get the provider for the given RPC URL
+    const provider = this.getProvider(rpcUrl);
+    //Create a contract instance for the StakeHub contract
+    const stakeHub = new ethers.Contract(
+      process.env[`${network.toUpperCase}_STAKE_HUB_ADDRESS`] ||
+        '0x0000000000000000000000000000000000002002',
+      STAKE_HUB_ABI,
+      provider,
+    );
+    let validatorInfo;
+    await this.utilsService.timeout(async () => {
+      validatorInfo = await stakeHub.getValidatorBasicInfo(validatorAddress);
+    }, 5000);
+    return validatorInfo;
+  }
+
   async getEVMBlockNumber(id: number): Promise<number> {
     const node = await this.prisma.node.findUnique({
       where: { id },
@@ -279,18 +304,33 @@ export class NodesService {
     }
   }
 
-  async remove(id: number) {
-    const node = await this.prisma.node.findUnique({
-      where: { id },
-    });
+  async getAllMSTValidatorNode(): Promise<string[]> {
+    const MSTRPC =
+      process.env.MST_PUBLIC_RPC || 'https://mariorpc.mstblockchain.com';
 
-    if (!node) {
-      throw new NotFoundException(`Node with id ${id} not found`);
-    }
+    const provider = this.getProvider(MSTRPC);
 
-    return await this.prisma.node.delete({
-      where: { id },
-    });
+    const STAKE_HUB_ABI = [
+      {
+        inputs: [],
+        name: 'getValidators',
+        outputs: [{ internalType: 'address[]', name: '', type: 'address[]' }],
+        stateMutability: 'view',
+        type: 'function',
+      },
+    ];
+    const stakeHub = new ethers.Contract(
+      process.env.MST_VALIDATORS_SET ||
+        '0x0000000000000000000000000000000000001000',
+      STAKE_HUB_ABI,
+      provider,
+    );
+    let validators: any = [];
+    await this.utilsService.timeout(async () => {
+      validators = await stakeHub.getValidators();
+      console.log('validators', validators);
+    }, 5000);
+    return validators;
   }
 
   async nodeHealthDetailed(rpcUrl: string): Promise<any> {
@@ -429,5 +469,67 @@ export class NodesService {
         `NotFoundException: No active nodes found for network ${network}`,
       );
     }
+  }
+
+  // Merge health details with each node
+  private async mergeNodeHealth(nodes: any[]) {
+    const MSTALLValidators = (await this.getAllMSTValidatorNode()) ?? [];
+    return Promise.all(
+      nodes.map(async (node, index) => {
+        const { url, ...nodeData } = node;
+
+        try {
+          const healthDetails = await this.nodeHealthDetailed(url);
+
+          let validatorStatus = null;
+
+          let isActiveValidator = false;
+
+          if (nodeData.tag == NodeTag.Validator && nodeData.minerAddress) {
+            validatorStatus = await this.getValidatorJAILStatus(
+              nodeData.network,
+              url,
+              nodeData.operatorAddress,
+            );
+            console.log('nodeData.minerAddress', nodeData.minerAddress);
+            if (
+              nodeData.minerAddress &&
+              MSTALLValidators.some(
+                (v) => v.toLowerCase() === nodeData.minerAddress.toLowerCase(),
+              )
+            ) {
+              isActiveValidator = true;
+            }
+          }
+
+          return {
+            ...nodeData,
+            healthy: healthDetails.healthy,
+            hasPeers: healthDetails.hasPeers,
+            listening: healthDetails.listening,
+            syncing: healthDetails.syncing,
+            startingBlock: healthDetails.syncing
+              ? healthDetails.startingBlock
+              : false,
+            currentBlock: healthDetails.syncing
+              ? healthDetails.currentBlock
+              : false,
+            highestBlock: healthDetails.syncing
+              ? healthDetails.highestBlock
+              : false,
+            peerCount: healthDetails.peerCount,
+            blockHeight: healthDetails.blockNumber,
+            validatorCreatedTime: validatorStatus?.[0],
+            jailStatus: validatorStatus?.[1],
+            jailUntil: validatorStatus?.[2],
+            isActiveValidator,
+          };
+        } catch (err) {
+          console.log(
+            `Error processing node ${node.name} (ID: ${node.id}): ${err.message}`,
+          );
+        }
+      }),
+    );
   }
 }

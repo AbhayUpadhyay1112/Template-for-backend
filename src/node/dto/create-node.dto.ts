@@ -55,7 +55,7 @@ export class CreateNodeDto {
   })
   @IsOptional()
   @IsString()
-  consensusAddress?: string;
+  minerAddress?: string;
 
   @ApiPropertyOptional({
     example: '0xabcdef1234567890...',
@@ -63,5 +63,13 @@ export class CreateNodeDto {
   })
   @IsOptional()
   @IsString()
-  validatorAddress?: string;
+  contractAddress?: string;
+
+  @ApiPropertyOptional({
+    example: '0xabcdef1234567890...',
+    description: 'Validator Address',
+  })
+  @IsOptional()
+  @IsString()
+  operatorAddress?: string;
 }

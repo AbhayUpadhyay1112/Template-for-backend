@@ -12,9 +12,6 @@ export class NodeResponseDto {
   @ApiProperty()
   name: string;
 
-  @ApiProperty()
-  url: string;
-
   @ApiPropertyOptional()
   thumbnailImage?: string | null;
 

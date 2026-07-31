@@ -79,6 +79,15 @@ export class EnvironmentVariables {
 
   @IsNumber()
   MST_PRIROITY_FEE_PAR_GAS: number;
+
+  @IsString()
+  MST_STAKE_HUB_ADDRESS: string;
+
+  @IsString()
+  MST_PUBLIC_RPC: string;
+
+  @IsString()
+  MST_VALIDATORS_SET: string;
 }
 
 /**
