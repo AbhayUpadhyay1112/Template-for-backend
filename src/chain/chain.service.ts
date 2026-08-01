@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateChainDto } from './dto/create-chain.dto';
 import { UpdateChainDto } from './dto/update-chain.dto';
+import { ChainResponseDto } from './dto/chain-response.dto';
 
 @Injectable()
 export class ChainService {
@@ -9,7 +10,7 @@ export class ChainService {
 
   async create(dto: CreateChainDto, userId: number) {
     try {
-      return await this.prisma.chain.create({
+      const chain = await this.prisma.chain.create({
         data: {
           chainId: dto.chainId,
           chainName: dto.chainName,
@@ -19,11 +20,25 @@ export class ChainService {
           createdBy: userId,
         },
       });
+
+      return this.toResponse(chain);
     } catch (err) {
       throw err;
     }
   }
 
+  private toResponse(chain: any): ChainResponseDto {
+    return {
+      id: chain.id,
+      chainId: chain.chainId,
+      chainName: chain.chainName,
+      status: chain.status,
+      createdBy: chain.createdBy,
+      createdAt: chain.createdAt,
+      updatedBy: chain.updatedBy,
+      updatedAt: chain.updatedAt,
+    };
+  }
   async findAll() {
     const data = await this.prisma.chain.findMany({
       orderBy: { createdAt: 'desc' },
@@ -31,7 +46,7 @@ export class ChainService {
 
     return {
       count: data.length,
-      data,
+      data: data.map((chain) => this.toResponse(chain)),
     };
   }
 
@@ -44,20 +59,21 @@ export class ChainService {
       throw new NotFoundException(`Chain with id ${id} not found`);
     }
 
-    return chain;
+    return this.toResponse(chain);
   }
-
   async update(id: number, dto: UpdateChainDto, userId: number) {
     await this.findOne(id);
 
     try {
-      return await this.prisma.chain.update({
+      const chain = await this.prisma.chain.update({
         where: { id },
         data: {
           ...dto,
           updatedBy: userId,
         },
       });
+
+      return this.toResponse(chain);
     } catch (err) {
       throw err;
     }

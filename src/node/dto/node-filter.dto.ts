@@ -4,8 +4,6 @@ import { IsInt, IsOptional, IsString, Min } from 'class-validator';
 
 export class NodeFilterDto {
   @ApiPropertyOptional({
-    example: 0,
-    required: false,
     description: 'Number of items to skip ',
   })
   @IsOptional()
@@ -15,8 +13,6 @@ export class NodeFilterDto {
   skip?: number;
 
   @ApiPropertyOptional({
-    example: 10,
-    required: false,
     description:
       'Number of items to take (pagination only applies when this or skip is provided)',
   })
@@ -27,8 +23,6 @@ export class NodeFilterDto {
   take?: number;
 
   @ApiPropertyOptional({
-    example: 'MST',
-    required: false,
     description: 'Filter nodes by network name',
   })
   @IsOptional()

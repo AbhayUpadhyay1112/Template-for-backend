@@ -8,6 +8,7 @@ import { UpdateNodeDto } from './dto/update-node.dto';
 import { firstValueFrom } from 'rxjs';
 import { Axios } from 'axios';
 import { NodeFilterDto } from './dto/node-filter.dto';
+import { NodeResponseDto } from './dto/node-response.dto';
 import {
   DEFAULT_MST_RPC_URL,
   SLASH_INDICATOR_ABI,
@@ -49,6 +50,35 @@ export class NodesService {
     } catch (err) {
       throw err;
     }
+  }
+  private toResponse(node: any): NodeResponseDto {
+    return {
+      id: node.id,
+      type: node.type,
+      network: node.network,
+      name: node.name,
+      thumbnailImage: node.thumbnailImage,
+      minerAddress: node.minerAddress,
+      contractAddress: node.contractAddress,
+      operatorAddress: node.operatorAddress,
+      status: node.status,
+      tag: node.tag,
+      createdAt: node.createdAt,
+      updatedAt: node.updatedAt,
+      healthy: node.healthy,
+      hasPeers: node.hasPeers,
+      listening: node.listening,
+      syncing: node.syncing,
+      startingBlock: node.startingBlock,
+      currentBlock: node.currentBlock,
+      highestBlock: node.highestBlock,
+      peerCount: node.peerCount,
+      blockHeight: node.blockHeight,
+      validatorCreatedTime: node.validatorCreatedTime,
+      jailStatus: node.jailStatus,
+      jailUntil: node.jailUntil,
+      isActiveValidator: node.isActiveValidator,
+    };
   }
 
   async findAll(filter: NodeFilterDto) {
@@ -151,43 +181,9 @@ export class NodesService {
       throw new NotFoundException(`Node with id ${id} not found`);
     }
 
-    const { url, ...nodeData } = node;
+    const [response] = await this.mergeNodeHealth([node]);
 
-    try {
-      const healthDetails = await this.nodeHealthDetailed(url);
-
-      return {
-        ...nodeData,
-        healthy: healthDetails.healthy,
-        hasPeers: healthDetails.hasPeers,
-        listening: healthDetails.listening,
-        syncing: healthDetails.syncing,
-        startingBlock: healthDetails.syncing
-          ? healthDetails.startingBlock
-          : false,
-        currentBlock: healthDetails.syncing
-          ? healthDetails.currentBlock
-          : false,
-        highestBlock: healthDetails.syncing
-          ? healthDetails.highestBlock
-          : false,
-        peerCount: healthDetails.peerCount,
-        blockHeight: healthDetails.blockNumber,
-      };
-    } catch {
-      return {
-        ...nodeData,
-        healthy: false,
-        hasPeers: false,
-        listening: false,
-        syncing: false,
-        startingBlock: false,
-        currentBlock: false,
-        highestBlock: false,
-        peerCount: 0,
-        blockHeight: null,
-      };
-    }
+    return response;
   }
 
   async update(id: number, dto: UpdateNodeDto) {
@@ -474,7 +470,7 @@ export class NodesService {
   // Merge health details with each node
   private async mergeNodeHealth(nodes: any[]) {
     const MSTALLValidators = (await this.getAllMSTValidatorNode()) ?? [];
-    return Promise.all(
+    const data = await Promise.all(
       nodes.map(async (node, index) => {
         const { url, ...nodeData } = node;
 
@@ -482,7 +478,6 @@ export class NodesService {
           const healthDetails = await this.nodeHealthDetailed(url);
 
           let validatorStatus = null;
-
           let isActiveValidator = false;
 
           if (nodeData.tag == NodeTag.Validator && nodeData.minerAddress) {
@@ -491,7 +486,7 @@ export class NodesService {
               url,
               nodeData.operatorAddress,
             );
-            console.log('nodeData.minerAddress', nodeData.minerAddress);
+
             if (
               nodeData.minerAddress &&
               MSTALLValidators.some(
@@ -528,8 +523,26 @@ export class NodesService {
           console.log(
             `Error processing node ${node.name} (ID: ${node.id}): ${err.message}`,
           );
+
+          return {
+            ...nodeData,
+            healthy: false,
+            hasPeers: false,
+            listening: false,
+            syncing: false,
+            startingBlock: false,
+            currentBlock: false,
+            highestBlock: false,
+            peerCount: 0,
+            blockHeight: null,
+            validatorCreatedTime: null,
+            jailStatus: null,
+            jailUntil: null,
+            isActiveValidator: false,
+          };
         }
       }),
     );
+    return data;
   }
 }
