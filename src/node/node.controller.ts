@@ -10,6 +10,8 @@ import {
   UseGuards,
   Req,
   Query,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -88,6 +90,27 @@ export class NodesController {
   @ApiResponse({ status: 404, description: 'Node not found' })
   update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateNodeDto) {
     return this.nodesService.update(id, dto);
+  }
+
+  @Post(':id/unjail')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary:
+      'Unjail a validator node by ID — builds StakeHub.unjail() calldata and broadcasts via KMS signer',
+  })
+  @ApiParam({ name: 'id', type: Number })
+  @ApiResponse({
+    status: 200,
+    description: 'Unjail transaction hash',
+    schema: { example: { txHash: '0xabc...' } },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'No operatorAddress or invalid address',
+  })
+  @ApiResponse({ status: 404, description: 'Node not found' })
+  async unjailNode(@Param('id', ParseIntPipe) id: number) {
+    return this.nodesService.unjailNode(id);
   }
 
   @Delete(':id')

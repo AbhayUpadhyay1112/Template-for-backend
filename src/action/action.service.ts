@@ -77,8 +77,28 @@ export class ActionService {
     //   throw new Error(`Unsupported call type: ${action.callType}`);
     // }
   }
+  private formatActionResponse(action: any) {
+    if (!action) return action;
+    if (action.wallet?.asset?.chain) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { rpc, fallbackRpc, ...chainWithoutRpc } =
+        action.wallet.asset.chain;
+      return {
+        ...action,
+        wallet: {
+          ...action.wallet,
+          asset: {
+            ...action.wallet.asset,
+            chain: chainWithoutRpc,
+          },
+        },
+      };
+    }
+    return action;
+  }
+
   async findAll(walletId: number) {
-    return await this.prisma.action.findMany({
+    const actions = await this.prisma.action.findMany({
       include: {
         wallet: {
           include: {
@@ -96,6 +116,8 @@ export class ActionService {
       },
       orderBy: { id: 'asc' },
     });
+
+    return actions.map((action) => this.formatActionResponse(action));
   }
   async update(id: number, data: UpdateActionDto) {
     return await this.prisma.action.update({

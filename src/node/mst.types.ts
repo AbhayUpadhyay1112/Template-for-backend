@@ -14,9 +14,8 @@ export interface NodeHealth {
 }
 
 export interface SlashIndicatorResult {
-  /** block height at which the count was last updated */
   height: number;
-  /** consecutive missed-block count tracked for this validator */
+
   count: number;
 }
 

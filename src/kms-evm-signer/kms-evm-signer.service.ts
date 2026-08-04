@@ -54,7 +54,7 @@ export class KMSEVMSigner {
     private readonly config: ConfigType<typeof kmsEvmConigFactory>,
   ) {}
   // ---- KMS client cache (avoid re-creating per instance/call) ----
-  private static clientCache = new Map<string, KMSClient>();
+  private static readonly clientCache = new Map<string, KMSClient>();
 
   private getKmsClient(): KMSClient {
     if (!KMSEVMSigner.clientCache.has(this.config.region)) {
@@ -86,7 +86,7 @@ export class KMSEVMSigner {
     }
 
     const derPubKey = Buffer.from(res.PublicKey);
-    const rawPubKey = derPubKey.slice(derPubKey.length - 65); // uncompressed EC point
+    const rawPubKey = derPubKey.slice(-65); // uncompressed EC point
     const pubKeyNoPrefix = rawPubKey.slice(1); // drop 0x04 prefix
     const hash = keccak256(pubKeyNoPrefix);
     return '0x' + hash.slice(-40);
@@ -195,8 +195,6 @@ export class KMSEVMSigner {
         data,
         from: address,
       } as TransactionRequest));
-
-    console.log('GAS', resolvedGasLimit, fees);
 
     const tx = Transaction.from({
       to,

@@ -1,5 +1,9 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { HttpService } from '@nestjs/axios';
@@ -21,6 +25,7 @@ import {
 import { ethers } from 'ethers';
 import { EntityType, NodeTag } from 'src/generated/prisma/enums';
 import { UtilsService } from '@Common';
+import { KMSEVMSigner } from '../kms-evm-signer/kms-evm-signer.service';
 
 @Injectable()
 export class NodesService {
@@ -28,6 +33,7 @@ export class NodesService {
     private readonly prisma: PrismaService,
     private readonly httpService: HttpService,
     private readonly utilsService: UtilsService,
+    private readonly kmsEvmSigner: KMSEVMSigner,
   ) {}
 
   async create(dto: CreateNodeDto, id: number) {
@@ -50,35 +56,6 @@ export class NodesService {
     } catch (err) {
       throw err;
     }
-  }
-  private toResponse(node: any): NodeResponseDto {
-    return {
-      id: node.id,
-      type: node.type,
-      network: node.network,
-      name: node.name,
-      thumbnailImage: node.thumbnailImage,
-      minerAddress: node.minerAddress,
-      contractAddress: node.contractAddress,
-      operatorAddress: node.operatorAddress,
-      status: node.status,
-      tag: node.tag,
-      createdAt: node.createdAt,
-      updatedAt: node.updatedAt,
-      healthy: node.healthy,
-      hasPeers: node.hasPeers,
-      listening: node.listening,
-      syncing: node.syncing,
-      startingBlock: node.startingBlock,
-      currentBlock: node.currentBlock,
-      highestBlock: node.highestBlock,
-      peerCount: node.peerCount,
-      blockHeight: node.blockHeight,
-      validatorCreatedTime: node.validatorCreatedTime,
-      jailStatus: node.jailStatus,
-      jailUntil: node.jailUntil,
-      isActiveValidator: node.isActiveValidator,
-    };
   }
 
   async findAll(filter: NodeFilterDto) {
@@ -181,7 +158,7 @@ export class NodesService {
       throw new NotFoundException(`Node with id ${id} not found`);
     }
 
-    const [response] = await this.mergeNodeHealth([node]);
+    const [response] = await this.mergeNodeHealth([node], true);
 
     return response;
   }
@@ -223,9 +200,7 @@ export class NodesService {
     try {
       const provider = new ethers.JsonRpcProvider(customRpc);
       return provider;
-    } catch (err) {
-      console.log(`RPC failed (${customRpc}): ${err.message}`);
-    }
+    } catch (err) {}
   }
 
   private async getValidatorJAILStatus(
@@ -233,27 +208,13 @@ export class NodesService {
     rpcUrl: string,
     validatorAddress: string,
   ) {
-    const STAKE_HUB_ABI = [
-      {
-        inputs: [
-          { internalType: 'address', name: 'operatorAddress', type: 'address' },
-        ],
-        name: 'getValidatorBasicInfo',
-        outputs: [
-          { internalType: 'uint256', name: 'createdTime', type: 'uint256' },
-          { internalType: 'bool', name: 'jailed', type: 'bool' },
-          { internalType: 'uint256', name: 'jailUntil', type: 'uint256' },
-        ],
-        stateMutability: 'view',
-        type: 'function',
-      },
-    ];
     //Get the provider for the given RPC URL
     const provider = this.getProvider(rpcUrl);
+    if (!provider) return null;
     //Create a contract instance for the StakeHub contract
     const stakeHub = new ethers.Contract(
-      process.env[`${network.toUpperCase}_STAKE_HUB_ADDRESS`] ||
-        '0x0000000000000000000000000000000000002002',
+      process.env[`${network.toUpperCase()}_STAKE_HUB_ADDRESS`] ||
+        STAKE_HUB_ADDRESS,
       STAKE_HUB_ABI,
       provider,
     );
@@ -262,6 +223,147 @@ export class NodesService {
       validatorInfo = await stakeHub.getValidatorBasicInfo(validatorAddress);
     }, 5000);
     return validatorInfo;
+  }
+
+  private async getValidatorSlashIndicator(
+    network: string,
+    rpcUrl: string,
+    validatorAddress: string,
+  ) {
+    const provider = this.getProvider(rpcUrl);
+    if (!provider) return null;
+
+    const slashIndicatorAddress =
+      process.env[`${network.toUpperCase()}_SLASH_INDICATOR_ADDRESS`] ||
+      SLASH_INDICATOR_ADDRESS;
+
+    const slashIndicatorContract = new ethers.Contract(
+      slashIndicatorAddress,
+      SLASH_INDICATOR_ABI,
+      provider,
+    );
+
+    let slashData: any = null;
+    let misdemeanorThreshold: any = null;
+    let felonyThreshold: any = null;
+
+    await this.utilsService.timeout(async () => {
+      try {
+        slashData =
+          await slashIndicatorContract.getSlashIndicator(validatorAddress);
+      } catch (err) {}
+
+      try {
+        misdemeanorThreshold =
+          await slashIndicatorContract.misdemeanorThreshold();
+      } catch (err) {}
+
+      try {
+        felonyThreshold = await slashIndicatorContract.felonyThreshold();
+      } catch (err) {}
+    }, 5000);
+
+    if (!slashData) return null;
+
+    const lastBlockNumber =
+      slashData[0] != null ? slashData[0].toString() : '0';
+    const count = slashData[1] != null ? slashData[1].toString() : '0';
+    const misThreshold =
+      misdemeanorThreshold != null ? misdemeanorThreshold.toString() : null;
+    const felThreshold =
+      felonyThreshold != null ? felonyThreshold.toString() : null;
+
+    const numCount = Number(count);
+    const numMis = misThreshold != null ? Number(misThreshold) : null;
+    const numFel = felThreshold != null ? Number(felThreshold) : null;
+
+    return {
+      lastBlockNumber,
+      count,
+      misdemeanorThreshold: misThreshold,
+      felonyThreshold: felThreshold,
+      isMisdemeanor:
+        numMis !== null &&
+        numCount >= numMis &&
+        (numFel === null || numCount < numFel),
+      isFelony: numFel !== null && numCount >= numFel,
+    };
+  }
+
+  async getNodeSlashIndicator(id: number) {
+    const node = await this.prisma.node.findUnique({
+      where: { id },
+    });
+
+    if (!node) {
+      throw new NotFoundException(`Node with id ${id} not found`);
+    }
+
+    const validatorAddr =
+      node.operatorAddress || node.minerAddress || node.contractAddress;
+
+    if (!validatorAddr) {
+      return {
+        id: node.id,
+        name: node.name,
+        slashIndicator: null,
+        message: 'No validator/operator address provided for this node',
+      };
+    }
+
+    const slashIndicatorStatus = await this.getValidatorSlashIndicator(
+      node.network,
+      node.url,
+      validatorAddr,
+    );
+
+    return {
+      id: node.id,
+      name: node.name,
+      network: node.network,
+      validatorAddress: validatorAddr,
+      slashIndicator: slashIndicatorStatus,
+    };
+  }
+
+  async unjailNode(id: number): Promise<{ txHash: string }> {
+    const node = await this.prisma.node.findUnique({
+      where: { id },
+    });
+
+    if (!node) {
+      throw new NotFoundException(`Node with id ${id} not found`);
+    }
+
+    const operatorAddress = node.operatorAddress;
+
+    if (!operatorAddress) {
+      throw new BadRequestException(
+        `Node ${id} does not have an operatorAddress configured`,
+      );
+    }
+
+    if (!ethers.isAddress(operatorAddress)) {
+      throw new BadRequestException(
+        `Invalid operatorAddress "${operatorAddress}" on Node ${id}`,
+      );
+    }
+
+    const iface = new ethers.Interface(STAKE_HUB_ABI);
+    const data = iface.encodeFunctionData('unjail', [operatorAddress]);
+
+    const stakeHubAddress =
+      process.env[`${node.network.toUpperCase()}_STAKE_HUB_ADDRESS`] ||
+      STAKE_HUB_ADDRESS; // 0x0000000000000000000000000000000000002002
+
+    const txHash = await this.kmsEvmSigner.sendRawTransaction({
+      rpcUrl: node.url,
+      to: stakeHubAddress,
+      value: 0n,
+      data,
+    });
+
+    return { txHash };
   }
 
   async getEVMBlockNumber(id: number): Promise<number> {
@@ -276,8 +378,6 @@ export class NodesService {
     const rpcUrl = node.url;
 
     if (node) {
-      const rpcUrl = node.url;
-
       try {
         const response = await firstValueFrom(
           this.httpService.post(rpcUrl, {
@@ -306,25 +406,15 @@ export class NodesService {
 
     const provider = this.getProvider(MSTRPC);
 
-    const STAKE_HUB_ABI = [
-      {
-        inputs: [],
-        name: 'getValidators',
-        outputs: [{ internalType: 'address[]', name: '', type: 'address[]' }],
-        stateMutability: 'view',
-        type: 'function',
-      },
-    ];
     const stakeHub = new ethers.Contract(
       process.env.MST_VALIDATORS_SET ||
         '0x0000000000000000000000000000000000001000',
-      STAKE_HUB_ABI,
+      VALIDATOR_SET_ABI,
       provider,
     );
     let validators: any = [];
     await this.utilsService.timeout(async () => {
       validators = await stakeHub.getValidators();
-      console.log('validators', validators);
     }, 5000);
     return validators;
   }
@@ -422,13 +512,12 @@ export class NodesService {
       await Promise.allSettled(
         _nodes.map(async (_node) => {
           try {
-            console.log('node', _node.name, _node.url);
-
             const healthDetails = await this.nodeHealthDetailed(_node.url);
 
             if (healthDetails) {
               nodeObjects.push({
                 name: _node.name,
+                tag: _node.tag,
                 healthy: healthDetails.healthy,
                 hasPeers: healthDetails.hasPeers,
                 listening: healthDetails.listening,
@@ -446,16 +535,9 @@ export class NodesService {
                 blockHeight: healthDetails.blockNumber,
               });
             }
-          } catch (err: any) {
-            console.error(
-              `Error fetching health for node ${_node.name} (${_node.url}):`,
-              err.message,
-            );
-          }
+          } catch (err: any) {}
         }),
       );
-
-      console.log(nodeObjects);
 
       return {
         nodes: nodeObjects,
@@ -468,7 +550,7 @@ export class NodesService {
   }
 
   // Merge health details with each node
-  private async mergeNodeHealth(nodes: any[]) {
+  private async mergeNodeHealth(nodes: any[], includeSlashIndicator = false) {
     const MSTALLValidators = (await this.getAllMSTValidatorNode()) ?? [];
     const data = await Promise.all(
       nodes.map(async (node, index) => {
@@ -478,14 +560,30 @@ export class NodesService {
           const healthDetails = await this.nodeHealthDetailed(url);
 
           let validatorStatus = null;
+          let slashIndicatorStatus = null;
           let isActiveValidator = false;
 
-          if (nodeData.tag == NodeTag.Validator && nodeData.minerAddress) {
-            validatorStatus = await this.getValidatorJAILStatus(
-              nodeData.network,
-              url,
-              nodeData.operatorAddress,
-            );
+          if (nodeData.tag == NodeTag.Validator) {
+            const validatorAddr =
+              nodeData.operatorAddress ||
+              nodeData.minerAddress ||
+              nodeData.contractAddress;
+
+            if (validatorAddr) {
+              validatorStatus = await this.getValidatorJAILStatus(
+                nodeData.network,
+                url,
+                validatorAddr,
+              );
+
+              if (includeSlashIndicator) {
+                slashIndicatorStatus = await this.getValidatorSlashIndicator(
+                  nodeData.network,
+                  url,
+                  validatorAddr,
+                );
+              }
+            }
 
             if (
               nodeData.minerAddress &&
@@ -518,12 +616,11 @@ export class NodesService {
             jailStatus: validatorStatus?.[1],
             jailUntil: validatorStatus?.[2],
             isActiveValidator,
+            ...(includeSlashIndicator && {
+              slashIndicator: slashIndicatorStatus,
+            }),
           };
         } catch (err) {
-          console.log(
-            `Error processing node ${node.name} (ID: ${node.id}): ${err.message}`,
-          );
-
           return {
             ...nodeData,
             healthy: false,
@@ -539,6 +636,9 @@ export class NodesService {
             jailStatus: null,
             jailUntil: null,
             isActiveValidator: false,
+            ...(includeSlashIndicator && {
+              slashIndicator: null,
+            }),
           };
         }
       }),

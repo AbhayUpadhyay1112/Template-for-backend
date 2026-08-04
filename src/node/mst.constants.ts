@@ -34,4 +34,5 @@ export const SLASH_INDICATOR_ABI = [
 /** StakeHub — validator lifecycle, jailing, commission, delegation (post-Feynman) */
 export const STAKE_HUB_ABI = [
   'function getValidatorBasicInfo(address operatorAddress) view returns (uint256 createdTime, bool jailed, uint256 jailUntil)',
+  'function unjail(address operatorAddress)',
 ];

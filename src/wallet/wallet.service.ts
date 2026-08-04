@@ -12,6 +12,22 @@ export class WalletService {
     private readonly KMSEVMSigner: KMSEVMSigner,
   ) {}
 
+  private formatWalletResponse(wallet: any) {
+    if (!wallet) return wallet;
+    if (wallet.asset?.chain) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { rpc, fallbackRpc, ...chainWithoutRpc } = wallet.asset.chain;
+      return {
+        ...wallet,
+        asset: {
+          ...wallet.asset,
+          chain: chainWithoutRpc,
+        },
+      };
+    }
+    return wallet;
+  }
+
   async create(dto: CreateWalletDto, userId: number) {
     const platform = await this.prisma.platform.findUnique({
       where: { id: dto.platformId },
@@ -32,7 +48,7 @@ export class WalletService {
     }
 
     try {
-      return await this.prisma.wallet.create({
+      const wallet = await this.prisma.wallet.create({
         data: {
           name: dto.walletName,
           walletAddress: dto.walletAddress,
@@ -51,6 +67,7 @@ export class WalletService {
           },
         },
       });
+      return this.formatWalletResponse(wallet);
     } catch (err) {
       console.log(err);
       throw err;
@@ -74,7 +91,7 @@ export class WalletService {
 
     return {
       count: data.length,
-      data,
+      data: data.map((wallet) => this.formatWalletResponse(wallet)),
     };
   }
 
@@ -95,7 +112,7 @@ export class WalletService {
       throw new NotFoundException(`Wallet with id ${id} not found`);
     }
 
-    return wallet;
+    return this.formatWalletResponse(wallet);
   }
 
   async update(id: number, dto: UpdateWalletDto, userId: number) {
@@ -124,7 +141,7 @@ export class WalletService {
     }
 
     try {
-      return await this.prisma.wallet.update({
+      const wallet = await this.prisma.wallet.update({
         where: { id },
         data: {
           name: dto.walletName,
@@ -144,6 +161,7 @@ export class WalletService {
           },
         },
       });
+      return this.formatWalletResponse(wallet);
     } catch (err) {
       console.log(err);
       throw err;

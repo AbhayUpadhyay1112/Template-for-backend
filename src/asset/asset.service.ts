@@ -7,6 +7,19 @@ import { UpdateAssetDto } from './dto/update-asset.dto';
 export class AssetService {
   constructor(private readonly prisma: PrismaService) {}
 
+  private formatAssetResponse(asset: any) {
+    if (!asset) return asset;
+    if (asset.chain) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { rpc, fallbackRpc, ...chainWithoutRpc } = asset.chain;
+      return {
+        ...asset,
+        chain: chainWithoutRpc,
+      };
+    }
+    return asset;
+  }
+
   async create(dto: CreateAssetDto, userId: number) {
     const chain = await this.prisma.chain.findUnique({
       where: { id: dto.chainId },
@@ -17,7 +30,7 @@ export class AssetService {
     }
 
     try {
-      return await this.prisma.asset.create({
+      const asset = await this.prisma.asset.create({
         data: {
           assetName: dto.assetName,
           chainId: dto.chainId,
@@ -30,6 +43,7 @@ export class AssetService {
           chain: true,
         },
       });
+      return this.formatAssetResponse(asset);
     } catch (err) {
       throw err;
     }
@@ -45,7 +59,7 @@ export class AssetService {
 
     return {
       count: data.length,
-      data,
+      data: data.map((asset) => this.formatAssetResponse(asset)),
     };
   }
 
@@ -61,7 +75,7 @@ export class AssetService {
       throw new NotFoundException(`Asset with id ${id} not found`);
     }
 
-    return asset;
+    return this.formatAssetResponse(asset);
   }
 
   async update(id: number, dto: UpdateAssetDto, userId: number) {
@@ -78,7 +92,7 @@ export class AssetService {
     }
 
     try {
-      return await this.prisma.asset.update({
+      const asset = await this.prisma.asset.update({
         where: { id },
         data: {
           ...dto,
@@ -88,6 +102,7 @@ export class AssetService {
           chain: true,
         },
       });
+      return this.formatAssetResponse(asset);
     } catch (err) {
       throw err;
     }
@@ -96,8 +111,12 @@ export class AssetService {
   async remove(id: number) {
     await this.findOne(id);
 
-    return this.prisma.asset.delete({
+    const asset = await this.prisma.asset.delete({
       where: { id },
+      include: {
+        chain: true,
+      },
     });
+    return this.formatAssetResponse(asset);
   }
 }

@@ -18,8 +18,8 @@ export class CreateTransactionDto {
   to: string;
 
   @ApiProperty({
-    example: 'MST Gas Wallet',
-    description: 'Name of the wallet',
+    example: 1000000000000000000,
+    description: 'Amount to send in wei (e.g. 1 MST = 1000000000000000000)',
   })
   @IsNumber()
   @IsNotEmpty()
