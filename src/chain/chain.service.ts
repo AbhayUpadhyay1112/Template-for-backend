@@ -82,8 +82,10 @@ export class ChainService {
   async remove(id: number) {
     await this.findOne(id);
 
-    return this.prisma.chain.delete({
+    const deleted = await this.prisma.chain.delete({
       where: { id },
     });
+
+    return this.toResponse(deleted);
   }
 }

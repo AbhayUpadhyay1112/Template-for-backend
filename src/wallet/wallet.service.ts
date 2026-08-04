@@ -171,9 +171,19 @@ export class WalletService {
   async remove(id: number) {
     await this.findOne(id);
 
-    return this.prisma.wallet.delete({
+    const wallet = await this.prisma.wallet.delete({
       where: { id },
+      include: {
+        platform: true,
+        asset: {
+          include: {
+            chain: true,
+          },
+        },
+      },
     });
+
+    return this.formatWalletResponse(wallet);
   }
 
   async signTransaction(dto: CreateTransactionDto) {

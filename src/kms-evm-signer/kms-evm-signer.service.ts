@@ -220,10 +220,6 @@ export class KMSEVMSigner {
     return tx.serialized; // signed raw tx hex, ready to broadcast
   }
 
-  /**
-   * Sign a transaction via KMS and broadcast it with eth_sendRawTransaction.
-   * Returns the transaction hash.
-   */
   async sendRawTransaction({
     rpcUrl,
     to,
