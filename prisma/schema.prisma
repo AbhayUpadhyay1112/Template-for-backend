@@ -238,7 +238,7 @@ model Platform {
 
 model Chain {
   id          Int      @id @default(autoincrement())
-  chainId     Int      @default(1) @map("chain_id")
+  chainId     Int      @unique @default(1) @map("chain_id")
   chainName   String   @map("chain_name")
   rpc         String
   fallbackRpc String?  @map("fallback_rpc")
@@ -254,20 +254,22 @@ model Chain {
 }
 
 model Asset {
-  id        Int      @id @default(autoincrement())
-  assetName String   @map("asset_name")
-  chainId   Int      @map("chain_id")
-  address   String?
-  isNative  Boolean  @default(false) @map("is_native")
-  status    String   @default("active")
-  createdBy Int?     @default(1) @map("created_by")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedBy Int?     @map("updated_by")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id          Int      @id @default(autoincrement())
+  assetName   String   @map("asset_name")
+  chainId     Int      @map("chain_id")
+  address     String
+  isNative    Boolean  @default(false) @map("is_native")
+  explorerUrl String?  @map("explorer_url")
+  status      String   @default("active")
+  createdBy   Int?     @default(1) @map("created_by")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedBy   Int?     @map("updated_by")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
   chain   Chain    @relation(fields: [chainId], references: [id])
   wallets Wallet[]
 
+  @@unique([chainId, address])
   @@map("asset")
 }
 

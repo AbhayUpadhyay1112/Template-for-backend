@@ -27,7 +27,7 @@ export class PlatformService {
       return await this.prisma.platform.create({
         data: {
           name: dto.name,
-          slug: this.generateSlug(dto.slug),
+          slug: this.generateSlug(dto.name),
           status: dto.status,
           createdBy: userId,
         },
@@ -65,8 +65,8 @@ export class PlatformService {
         where: { id },
         data: {
           ...dto,
-          ...(dto.slug && {
-            slug: this.generateSlug(dto.slug),
+          ...(dto.name && {
+            slug: this.generateSlug(dto.name),
           }),
           updatedBy: userId,
         },

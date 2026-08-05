@@ -7,11 +7,6 @@ export class CreatePlatformDto {
   @IsNotEmpty()
   name: string;
 
-  @ApiProperty({ example: 'mst' })
-  @IsString()
-  @IsNotEmpty()
-  slug: string;
-
   @ApiPropertyOptional({
     example: 'active',
     description: 'Platform status e.g. active, inactive',

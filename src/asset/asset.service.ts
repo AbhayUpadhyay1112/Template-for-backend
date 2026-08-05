@@ -39,8 +39,9 @@ export class AssetService {
         data: {
           assetName: dto.assetName,
           chainId: dto.chainId,
-          address: dto.address,
+          address: dto.address ?? '',
           isNative: dto.isNative,
+          explorerUrl: dto.explorerUrl,
           status: dto.status,
           createdBy: userId,
         },
@@ -50,6 +51,14 @@ export class AssetService {
       });
       return this.formatAssetResponse(asset);
     } catch (err) {
+      if (
+        err instanceof Prisma.PrismaClientKnownRequestError &&
+        err.code === 'P2002'
+      ) {
+        throw new BadRequestException(
+          'An asset with this contract address already exists on the selected network.',
+        );
+      }
       throw err;
     }
   }
@@ -109,6 +118,14 @@ export class AssetService {
       });
       return this.formatAssetResponse(asset);
     } catch (err) {
+      if (
+        err instanceof Prisma.PrismaClientKnownRequestError &&
+        err.code === 'P2002'
+      ) {
+        throw new BadRequestException(
+          'An asset with this contract address already exists on the selected network.',
+        );
+      }
       throw err;
     }
   }

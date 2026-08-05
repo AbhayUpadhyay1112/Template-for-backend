@@ -26,6 +26,11 @@ export class CreateAssetDto {
   @IsBoolean()
   isNative: boolean;
 
+  @ApiPropertyOptional({ example: 'https://etherscan.io' })
+  @IsOptional()
+  @IsString()
+  explorerUrl?: string;
+
   @ApiPropertyOptional({
     example: 'active',
     description: 'Asset status e.g. active, inactive',
