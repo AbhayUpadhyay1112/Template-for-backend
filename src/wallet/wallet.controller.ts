@@ -30,6 +30,7 @@ import {
   RolesGuard,
   UserType,
 } from '@Common';
+import { CreateTransactionDto } from './dto/create-transaction.dto';
 
 @ApiTags('Wallet')
 @ApiBearerAuth()
@@ -106,5 +107,18 @@ export class WalletController {
   })
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.walletService.remove(id);
+  }
+
+  @Post('/sign-transaction')
+  @ApiOperation({ summary: 'Sign A transaction' })
+  @ApiResponse({
+    status: 201,
+    description: 'Wallet created',
+  })
+  signTransaction(
+    @Req() req: AuthenticatedRequest,
+    @Body() dto: CreateTransactionDto,
+  ) {
+    return this.walletService.signTransaction(dto);
   }
 }

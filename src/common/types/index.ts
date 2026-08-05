@@ -3,6 +3,7 @@ import {
   IsBoolean,
   IsEnum,
   IsInt,
+  IsNumber,
   IsOptional,
   IsString,
   Max,
@@ -60,6 +61,33 @@ export class EnvironmentVariables {
   @Min(1)
   @Max(65535)
   METRICS_PORT?: number;
+
+  @IsString()
+  AWS_KEY_ID: string;
+
+  @IsString()
+  AWS_REGION: string;
+
+  @IsString()
+  AWS_ACCESS_KEY_ID: string;
+
+  @IsString()
+  AWS_SECRET_ACCESS_KEY: string;
+
+  @IsNumber()
+  MST_MAX_FEE_PER_GAS: number;
+
+  @IsNumber()
+  MST_PRIROITY_FEE_PAR_GAS: number;
+
+  @IsString()
+  MST_STAKE_HUB_ADDRESS: string;
+
+  @IsString()
+  MST_PUBLIC_RPC: string;
+
+  @IsString()
+  MST_VALIDATORS_SET: string;
 }
 
 /**

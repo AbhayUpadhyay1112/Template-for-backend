@@ -42,10 +42,6 @@ export class CreateNodeDto {
   @IsEnum(NodeTag)
   tag: NodeTag;
 
-  @ApiProperty()
-  @IsNumber()
-  createdBy: number;
-
   @ApiPropertyOptional({
     example: 'active',
     description: 'Node status e.g. active, inactive, maintenance',
@@ -53,4 +49,27 @@ export class CreateNodeDto {
   @IsString()
   @IsNotEmpty()
   status?: string;
+  @ApiPropertyOptional({
+    example: '0x1234567890abcdef...',
+    description: 'Consensus Address',
+  })
+  @IsOptional()
+  @IsString()
+  minerAddress?: string;
+
+  @ApiPropertyOptional({
+    example: '0xabcdef1234567890...',
+    description: 'Validator Address',
+  })
+  @IsOptional()
+  @IsString()
+  contractAddress?: string;
+
+  @ApiPropertyOptional({
+    example: '0xabcdef1234567890...',
+    description: 'Validator Address',
+  })
+  @IsOptional()
+  @IsString()
+  operatorAddress?: string;
 }

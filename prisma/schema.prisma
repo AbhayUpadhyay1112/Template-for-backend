@@ -175,17 +175,20 @@ enum NodeTag {
 }
 
 model Node {
-  id             Int      @id @default(autoincrement())
-  type           String
-  network        String
-  name           String
-  url            String   @unique
-  thumbnailImage String?  @map("thumbnail_image")
-  status         String   @default("active")
-  tag            NodeTag  @default(Other)
-  createdBy      Int?     @default(1)
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+  id              Int      @id @default(autoincrement())
+  type            String
+  network         String
+  name            String
+  url             String   @unique
+  thumbnailImage  String?  @map("thumbnail_image")
+  minerAddress    String?  @map("consensus_address")
+  contractAddress String?  @map("validator_address")
+  operatorAddress String?  @map("operator_address")
+  status          String   @default("active")
+  tag             NodeTag  @default(Other)
+  createdBy       Int?     @default(1)
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
 
   @@map("node")
 }
@@ -235,6 +238,7 @@ model Platform {
 
 model Chain {
   id          Int      @id @default(autoincrement())
+  chainId     Int      @default(1) @map("chain_id")
   chainName   String   @map("chain_name")
   rpc         String
   fallbackRpc String?  @map("fallback_rpc")
@@ -274,6 +278,13 @@ enum ActionType {
   @@map("action_type")
 }
 
+enum EntityType {
+  Wallet @map("wallet")
+  Node   @map("node")
+
+  @@map("entity_type")
+}
+
 enum ActionCall {
   EOA @map("eoa")
   SC  @map("smart_contract")
@@ -286,8 +297,8 @@ model Action {
   actionName   String     @map("chain_name")
   description  String
   actionType   ActionType @default(Read) @map("action_type")
-  wallet       Wallet     @relation(fields: [walletId], references: [id])
-  walletId     Int        @map("wallet_id")
+  entityType   EntityType @default(Node) @map("entity_type")
+  entityId     Int        @default(1) @map("entity_id")
   callType     ActionCall @default(EOA) @map("call_type")
   callMetaData Json?      @map("call_metadata")
   auto         Boolean    @default(false)
@@ -296,6 +307,8 @@ model Action {
   createdAt    DateTime   @default(now()) @map("created_at")
   updatedBy    Int?       @map("updated_by")
   updatedAt    DateTime   @updatedAt @map("updated_at")
+  wallet       Wallet?    @relation(fields: [walletId], references: [id])
+  walletId     Int?
 
   @@map("action")
 }

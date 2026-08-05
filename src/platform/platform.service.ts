@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
+import { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreatePlatformDto } from './dto/create-platform.dto';
 import { UpdatePlatformDto } from './dto/update-platform.dto';
@@ -74,8 +79,20 @@ export class PlatformService {
   async remove(id: number) {
     await this.findOne(id);
 
-    return this.prisma.platform.delete({
-      where: { id },
-    });
+    try {
+      return await this.prisma.platform.delete({
+        where: { id },
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2003'
+      ) {
+        throw new BadRequestException(
+          'This platform cannot be deleted because it has dependent wallets. Remove the dependencies first and try again.',
+        );
+      }
+      throw error;
+    }
   }
 }
