@@ -5,6 +5,7 @@ import {
   IsNotEmpty,
   IsUrl,
   IsNumber,
+  ValidateIf,
 } from 'class-validator';
 
 export class CreateChainDto {
@@ -27,6 +28,7 @@ export class CreateChainDto {
   rpc: string;
 
   @ApiPropertyOptional({ example: 'https://fallback-rpc.example.com' })
+  @ValidateIf((o) => !!o.fallbackRpc)
   @IsOptional()
   @IsUrl()
   fallbackRpc?: string;

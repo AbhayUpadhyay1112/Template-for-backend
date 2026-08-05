@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
+import { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateChainDto } from './dto/create-chain.dto';
 import { UpdateChainDto } from './dto/update-chain.dto';
@@ -82,10 +87,22 @@ export class ChainService {
   async remove(id: number) {
     await this.findOne(id);
 
-    const deleted = await this.prisma.chain.delete({
-      where: { id },
-    });
+    try {
+      const deleted = await this.prisma.chain.delete({
+        where: { id },
+      });
 
-    return this.toResponse(deleted);
+      return this.toResponse(deleted);
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2003'
+      ) {
+        throw new BadRequestException(
+          'This chain cannot be deleted because it has dependent assets. Remove the dependencies first and try again.',
+        );
+      }
+      throw error;
+    }
   }
 }

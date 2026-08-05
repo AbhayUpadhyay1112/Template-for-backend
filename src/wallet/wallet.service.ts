@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
+import { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateWalletDto } from './dto/create-wallet.dto';
 import { UpdateWalletDto } from './dto/update-wallet.dto';
@@ -171,19 +176,31 @@ export class WalletService {
   async remove(id: number) {
     await this.findOne(id);
 
-    const wallet = await this.prisma.wallet.delete({
-      where: { id },
-      include: {
-        platform: true,
-        asset: {
-          include: {
-            chain: true,
+    try {
+      const wallet = await this.prisma.wallet.delete({
+        where: { id },
+        include: {
+          platform: true,
+          asset: {
+            include: {
+              chain: true,
+            },
           },
         },
-      },
-    });
+      });
 
-    return this.formatWalletResponse(wallet);
+      return this.formatWalletResponse(wallet);
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2003'
+      ) {
+        throw new BadRequestException(
+          'This wallet cannot be deleted because it has dependent actions. Remove the dependencies first and try again.',
+        );
+      }
+      throw error;
+    }
   }
 
   async signTransaction(dto: CreateTransactionDto) {
