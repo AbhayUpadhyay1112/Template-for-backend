@@ -290,6 +290,7 @@ model Action {
   id           Int        @id @default(autoincrement())
   actionName   String     @map("chain_name")
   description  String
+  remarks      String?
   actionType   ActionType @default(Read) @map("action_type")
   chainID      Int        @map("chain_id")
   chain        Chain      @relation(fields: [chainID], references: [id])

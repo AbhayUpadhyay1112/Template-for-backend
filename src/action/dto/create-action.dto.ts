@@ -18,6 +18,11 @@ export class CreateActionDto {
   @IsString()
   description: string;
 
+  @ApiPropertyOptional({ example: 'Optional remarks' })
+  @IsOptional()
+  @IsString()
+  remarks?: string;
+
   @ApiPropertyOptional({ example: '1' })
   @IsOptional()
   chainID?: number;

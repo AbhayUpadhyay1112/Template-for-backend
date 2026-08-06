@@ -14,6 +14,7 @@ export class ActionService {
       data: {
         actionName: data.actionName,
         description: data.description,
+        remarks: data.remarks,
         chainID: data.chainID,
         actionType: data.actionType,
         auto: data.auto,
@@ -85,6 +86,7 @@ export class ActionService {
       data: {
         actionName: data.actionName,
         description: data.description,
+        remarks: data.remarks,
         actionType: data.actionType,
         auto: data.auto,
         status: data.status,
