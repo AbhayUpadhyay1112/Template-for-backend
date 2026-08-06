@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { ethers } from 'ethers';
 import { CreateActionDto } from './dto/create-action.dto';
 import { UpdateActionDto } from './dto/update-action.dto';
 import { PrismaService } from '../prisma';
@@ -8,14 +7,17 @@ import { PrismaService } from '../prisma';
 export class ActionService {
   constructor(private readonly prisma: PrismaService) {}
   async create(data: CreateActionDto) {
+    if (!data?.chainID) {
+      return { status: false, message: 'chainID is required' };
+    }
     return await this.prisma.action.create({
       data: {
         actionName: data.actionName,
         description: data.description,
+        chainID: data.chainID,
         actionType: data.actionType,
         auto: data.auto,
         status: data.status,
-        walletId: data.walletId,
         callMetaData: data.callMetaData,
         callType: data.callType,
       },
@@ -25,16 +27,7 @@ export class ActionService {
   async call(actionId: number) {
     const action = await this.prisma.action.findUniqueOrThrow({
       include: {
-        wallet: {
-          include: {
-            platform: true,
-            asset: {
-              include: {
-                chain: true,
-              },
-            },
-          },
-        },
+        chain: true,
       },
       where: { id: actionId },
     });
@@ -77,47 +70,15 @@ export class ActionService {
     //   throw new Error(`Unsupported call type: ${action.callType}`);
     // }
   }
-  private formatActionResponse(action: any) {
-    if (!action) return action;
-    if (action.wallet?.asset?.chain) {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { rpc, fallbackRpc, ...chainWithoutRpc } =
-        action.wallet.asset.chain;
-      return {
-        ...action,
-        wallet: {
-          ...action.wallet,
-          asset: {
-            ...action.wallet.asset,
-            chain: chainWithoutRpc,
-          },
-        },
-      };
-    }
-    return action;
-  }
 
-  async findAll(walletId: number) {
+  async findAll() {
     const actions = await this.prisma.action.findMany({
       include: {
-        wallet: {
-          include: {
-            platform: true,
-            asset: {
-              include: {
-                chain: true,
-              },
-            },
-          },
-        },
+        chain: true,
       },
-      where: {
-        walletId,
-      },
-      orderBy: { id: 'asc' },
     });
 
-    return actions.map((action) => this.formatActionResponse(action));
+    return actions;
   }
   async update(id: number, data: UpdateActionDto) {
     return await this.prisma.action.update({
@@ -127,7 +88,6 @@ export class ActionService {
         actionType: data.actionType,
         auto: data.auto,
         status: data.status,
-        walletId: data.walletId,
         callMetaData: data.callMetaData,
         callType: data.callType,
       },

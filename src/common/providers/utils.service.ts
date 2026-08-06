@@ -358,4 +358,18 @@ export class UtilsService {
 
     return convert(input);
   }
+
+  isJSON(str: string) {
+    // Use _.attempt to run JSON.parse and check if it returns an Error object
+    return !_.isError(_.attempt(JSON.parse, str));
+  }
+  isJSONString(str: string) {
+    if (typeof str !== 'string') return false;
+    try {
+      const result = JSON.parse(str);
+      return typeof result === 'object' && result !== null;
+    } catch (e) {
+      return false;
+    }
+  }
 }

@@ -202,21 +202,15 @@ enum WalletPurpose {
 }
 
 model Wallet {
-  id            Int           @id @default(autoincrement())
-  name          String        @default("")
-  walletAddress String        @default("0x05530552aa4DAB77b1bc363AAF5E6b14C053902F") @map("wallet_address")
-  platformId    Int           @map("platform_id")
-  purpose       WalletPurpose
-  assetId       Int           @map("asset_id")
-  status        String        @default("active")
-  createdBy     Int?          @default(1) @map("created_by")
-  createdAt     DateTime      @default(now()) @map("created_at")
-  updatedBy     Int?          @map("updated_by")
-  updatedAt     DateTime      @updatedAt @map("updated_at")
-
-  platform Platform @relation(fields: [platformId], references: [id])
-  asset    Asset    @relation(fields: [assetId], references: [id])
-  actions  Action[]
+  id            Int      @id @default(autoincrement())
+  name          String   @default("")
+  walletAddress String   @default("0x05530552aa4DAB77b1bc363AAF5E6b14C053902F") @map("wallet_address")
+  awsKeyID      String?  @map("aws_key_id")
+  status        String   @default("active")
+  createdBy     Int?     @default(1) @map("created_by")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedBy     Int?     @map("updated_by")
+  updatedAt     DateTime @updatedAt @map("updated_at")
 
   @@map("wallet")
 }
@@ -230,8 +224,6 @@ model Platform {
   createdAt DateTime @default(now()) @map("created_at")
   updatedBy Int?     @map("updated_by")
   updatedAt DateTime @updatedAt @map("updated_at")
-
-  wallets Wallet[]
 
   @@map("platform")
 }
@@ -249,6 +241,7 @@ model Chain {
   updatedAt   DateTime @updatedAt @map("updated_at")
 
   assets Asset[]
+  action Action[]
 
   @@map("chain")
 }
@@ -266,8 +259,7 @@ model Asset {
   updatedBy   Int?     @map("updated_by")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
-  chain   Chain    @relation(fields: [chainId], references: [id])
-  wallets Wallet[]
+  chain Chain @relation(fields: [chainId], references: [id])
 
   @@unique([chainId, address])
   @@map("asset")
@@ -299,8 +291,8 @@ model Action {
   actionName   String     @map("chain_name")
   description  String
   actionType   ActionType @default(Read) @map("action_type")
-  entityType   EntityType @default(Node) @map("entity_type")
-  entityId     Int        @default(1) @map("entity_id")
+  chainID      Int        @map("chain_id")
+  chain        Chain      @relation(fields: [chainID], references: [id])
   callType     ActionCall @default(EOA) @map("call_type")
   callMetaData Json?      @map("call_metadata")
   auto         Boolean    @default(false)
@@ -309,8 +301,6 @@ model Action {
   createdAt    DateTime   @default(now()) @map("created_at")
   updatedBy    Int?       @map("updated_by")
   updatedAt    DateTime   @updatedAt @map("updated_at")
-  wallet       Wallet?    @relation(fields: [walletId], references: [id])
-  walletId     Int?
 
   @@map("action")
 }
