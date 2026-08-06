@@ -230,7 +230,7 @@ model Platform {
 
 model Chain {
   id          Int      @id @default(autoincrement())
-  chainId     Int      @unique @default(1) @map("chain_id")
+  chainId     Int      @unique @map("chain_id")
   chainName   String   @map("chain_name")
   rpc         String
   fallbackRpc String?  @map("fallback_rpc")
