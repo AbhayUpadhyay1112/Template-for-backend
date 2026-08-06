@@ -30,6 +30,12 @@ export class ChainResponseDto {
   fallbackRpc: string;
 
   @ApiProperty({
+    example: 'active',
+    description: 'Chain status',
+  })
+  status: string;
+
+  @ApiProperty({
     example: 1,
     description: 'User ID who created the chain',
   })
