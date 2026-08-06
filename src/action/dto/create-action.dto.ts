@@ -3,10 +3,7 @@ import {
   IsString,
   IsOptional,
   IsNotEmpty,
-  IsUrl,
   IsEnum,
-  IsInt,
-  Min,
   IsBoolean,
 } from 'class-validator';
 import { ActionCall, ActionType } from 'src/generated/prisma/enums';
@@ -21,17 +18,19 @@ export class CreateActionDto {
   @IsString()
   description: string;
 
+  @ApiPropertyOptional({ example: 'Optional remarks' })
+  @IsOptional()
+  @IsString()
+  remarks?: string;
+
+  @ApiPropertyOptional({ example: '1' })
+  @IsOptional()
+  chainID?: number;
+
   @ApiPropertyOptional({ example: 'Read' })
   @IsOptional()
   @IsEnum(ActionType)
   actionType?: ActionType;
-
-  @ApiPropertyOptional({
-    example: '1',
-  })
-  @IsInt()
-  @Min(1)
-  walletId!: number;
 
   @ApiPropertyOptional({ example: 'EOA' })
   @IsEnum(ActionCall)
@@ -39,8 +38,7 @@ export class CreateActionDto {
 
   @ApiPropertyOptional()
   @IsOptional()
-  @IsEnum(ActionCall)
-  callMetaData?: ActionCall;
+  callMetaData?: any;
 
   @ApiPropertyOptional()
   @IsOptional()
