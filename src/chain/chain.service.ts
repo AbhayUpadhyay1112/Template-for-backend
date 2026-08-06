@@ -39,6 +39,7 @@ export class ChainService {
       chainName: chain.chainName,
       rpc: chain.rpc,
       fallbackRpc: chain.fallbackRpc,
+      status: chain.status,
       createdBy: chain.createdBy,
       createdAt: chain.createdAt,
       updatedBy: chain.updatedBy,
