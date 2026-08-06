@@ -31,6 +31,7 @@ import {
   UserType,
 } from '@Common';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
+import { WalletActionDTO } from './dto/wallet-action.dto';
 
 @ApiTags('Wallet')
 @ApiBearerAuth()
@@ -109,16 +110,13 @@ export class WalletController {
     return this.walletService.remove(id);
   }
 
-  @Post('/sign-transaction')
-  @ApiOperation({ summary: 'Sign A transaction' })
+  @Post('/action')
+  @ApiOperation({ summary: 'Perform an Action' })
   @ApiResponse({
     status: 201,
-    description: 'Wallet created',
+    description: 'Action Performed',
   })
-  signTransaction(
-    @Req() req: AuthenticatedRequest,
-    @Body() dto: CreateTransactionDto,
-  ) {
-    return this.walletService.signTransaction(dto);
+  action(@Req() req: AuthenticatedRequest, @Body() dto: WalletActionDTO) {
+    return this.walletService.action(dto);
   }
 }

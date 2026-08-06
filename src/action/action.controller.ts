@@ -20,15 +20,19 @@ export class ActionController {
   create(@Body() createActionDto: CreateActionDto) {
     return this.actionService.create(createActionDto);
   }
-
   @Post(':id/call')
   call(@Param('id', ParseIntPipe) id: number) {
     return this.actionService.call(id);
   }
 
-  @Get(':walletId')
-  findAll(@Param('walletId') walletId: number) {
-    return this.actionService.findAll(walletId);
+  // @Get(':walletId')
+  // findAll(@Param('walletId') walletId: number) {
+  //   return this.actionService.findAll(walletId);
+  // }
+
+  @Get()
+  findAll() {
+    return this.actionService.findAll();
   }
 
   @Patch(':id')

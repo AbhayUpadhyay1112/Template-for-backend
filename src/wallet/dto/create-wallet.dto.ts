@@ -26,26 +26,12 @@ export class CreateWalletDto {
   walletName: string;
 
   @ApiProperty({
-    example: 1,
-    description: 'Platform ID associated with the wallet',
+    example: 'AWDDDUU-8688-EWWS-AAA',
+    description: 'AWS KMS KEY ID',
   })
-  @IsNumber()
-  @IsNotEmpty()
-  platformId: number;
-
-  @ApiProperty({
-    enum: WalletPurpose,
-    description: 'Purpose of the wallet',
-  })
-  @IsEnum(WalletPurpose)
-  purpose: WalletPurpose;
-
-  @ApiProperty({
-    example: 1,
-    description: 'Asset ID associated with the wallet',
-  })
-  @IsNumber()
-  assetId: number;
+  @IsString()
+  @IsOptional()
+  awsKeyID: string;
 
   @ApiPropertyOptional({
     example: 'active',

@@ -355,13 +355,14 @@ export class NodesService {
     const stakeHubAddress =
       process.env[`${node.network.toUpperCase()}_STAKE_HUB_ADDRESS`] ||
       STAKE_HUB_ADDRESS; // 0x0000000000000000000000000000000000002002
+    const txHash = '';
 
-    const txHash = await this.kmsEvmSigner.sendRawTransaction({
-      rpcUrl: node.url,
-      to: stakeHubAddress,
-      value: 0n,
-      data,
-    });
+    // const txHash = await this.kmsEvmSigner.sendRawTransaction({
+    //   rpcUrl: node.url,
+    //   to: stakeHubAddress,
+    //   value: 0n,
+    //   data,
+    // });
 
     return { txHash };
   }

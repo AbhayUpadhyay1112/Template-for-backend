@@ -18,10 +18,16 @@ export class ChainResponseDto {
   chainName: string;
 
   @ApiProperty({
-    example: 'active',
-    description: 'Chain status',
+    example: 'RPC',
+    description: 'RPC status',
   })
-  status: string;
+  rpc: string;
+
+  @ApiProperty({
+    example: 'Fallback RPC',
+    description: 'Fallback RPC',
+  })
+  fallbackRpc: string;
 
   @ApiProperty({
     example: 1,

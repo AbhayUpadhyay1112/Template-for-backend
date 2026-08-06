@@ -35,11 +35,13 @@ export interface SignTransactionParams {
 
 export interface SendRawTransactionParams extends SignTransactionParams {
   rpcUrl: string;
+  awsKeyId: string;
 }
 
 interface KmsSignDigestParams {
   digestBuf: Buffer;
   expectedAddress: string;
+  keyId: string;
 }
 
 interface DerSignature {
@@ -75,10 +77,10 @@ export class KMSEVMSigner {
   /**
    * Derive the Ethereum address controlled by this KMS key.
    */
-  async getAddress(): Promise<string> {
+  async getAddress(customKeyID?: string): Promise<string> {
     const kms = this.getKmsClient();
     const res = await kms.send(
-      new GetPublicKeyCommand({ KeyId: this.config.KEY_ID }),
+      new GetPublicKeyCommand({ KeyId: customKeyID || this.config.KEY_ID }),
     );
 
     if (!res.PublicKey) {
@@ -115,12 +117,13 @@ export class KMSEVMSigner {
   private async kmsSignDigest({
     digestBuf,
     expectedAddress,
+    keyId,
   }: KmsSignDigestParams): Promise<Signature> {
     const kms = this.getKmsClient();
 
     const signRes = await kms.send(
       new SignCommand({
-        KeyId: this.config.KEY_ID,
+        KeyId: keyId || this.config.KEY_ID,
         Message: digestBuf,
         MessageType: 'DIGEST',
         SigningAlgorithm: 'ECDSA_SHA_256',
@@ -145,8 +148,8 @@ export class KMSEVMSigner {
         if (recovered.toLowerCase() === expectedAddress.toLowerCase()) {
           return candidate;
         }
-      } catch (_) {
-        // try next recovery id
+      } catch (e_) {
+        console.log(e_);
       }
     }
     throw new Error('KMS signature did not recover to the expected address');
@@ -168,8 +171,9 @@ export class KMSEVMSigner {
       maxFeePerGas,
       maxPriorityFeePerGas,
     }: SignTransactionParams,
+    customKeyID?: string,
   ): Promise<string> {
-    const address = await this.getAddress();
+    const address = await this.getAddress(customKeyID);
 
     const resolvedNonce =
       nonce ?? (await provider.getTransactionCount(address, 'pending'));
@@ -214,6 +218,7 @@ export class KMSEVMSigner {
     const signature = await this.kmsSignDigest({
       digestBuf,
       expectedAddress: address,
+      keyId: customKeyID || this.config.KEY_ID,
     });
 
     tx.signature = signature;
@@ -230,24 +235,29 @@ export class KMSEVMSigner {
     gasLimit,
     maxFeePerGas,
     maxPriorityFeePerGas,
+    awsKeyId,
   }: SendRawTransactionParams): Promise<string> {
     const provider = new JsonRpcProvider(rpcUrl);
 
     const resolvedChainId =
       chainId ?? Number((await provider.getNetwork()).chainId);
 
-    const signedRawTx = await this.signTransaction(provider, {
-      to,
-      value,
-      data,
-      chainId: resolvedChainId,
-      nonce,
-      gasLimit,
-      maxFeePerGas: maxFeePerGas ? maxFeePerGas : this.config.maxFeePerGas,
-      maxPriorityFeePerGas: maxPriorityFeePerGas
-        ? maxPriorityFeePerGas
-        : this.config.maxPriorityFeePerGas,
-    });
+    const signedRawTx = await this.signTransaction(
+      provider,
+      {
+        to,
+        value,
+        data,
+        chainId: resolvedChainId,
+        nonce,
+        gasLimit,
+        maxFeePerGas: maxFeePerGas ? maxFeePerGas : this.config.maxFeePerGas,
+        maxPriorityFeePerGas: maxPriorityFeePerGas
+          ? maxPriorityFeePerGas
+          : this.config.maxPriorityFeePerGas,
+      },
+      awsKeyId,
+    );
 
     const txResponse = await provider.broadcastTransaction(signedRawTx);
     return txResponse.hash;
