@@ -34,14 +34,6 @@ export class ChainService {
 
       return this.toResponse(chain);
     } catch (err) {
-      if (
-        err instanceof Prisma.PrismaClientKnownRequestError &&
-        err.code === 'P2002'
-      ) {
-        throw new BadRequestException(
-          'Chain ID already exists. Please enter a unique Chain ID.',
-        );
-      }
       throw err;
     }
   }
@@ -96,14 +88,6 @@ export class ChainService {
 
       return this.toResponse(chain);
     } catch (err) {
-      if (
-        err instanceof Prisma.PrismaClientKnownRequestError &&
-        err.code === 'P2002'
-      ) {
-        throw new BadRequestException(
-          'Chain ID already exists. Please enter a unique Chain ID.',
-        );
-      }
       throw err;
     }
   }
