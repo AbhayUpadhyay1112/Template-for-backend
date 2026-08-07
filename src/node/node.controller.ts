@@ -29,6 +29,7 @@ import {
   AccessGuard,
   AuthenticatedRequest,
   BaseController,
+  DisableCache,
   JwtAuthGuard,
   Roles,
   RolesGuard,
@@ -40,6 +41,7 @@ import {
 @Roles(UserType.Admin)
 @Controller('nodes')
 @UseGuards(JwtAuthGuard, AccessGuard, RolesGuard)
+@DisableCache()
 export class NodesController {
   constructor(private readonly nodesService: NodesService) {}
 

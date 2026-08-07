@@ -260,6 +260,11 @@ export class KMSEVMSigner {
     );
 
     const txResponse = await provider.broadcastTransaction(signedRawTx);
-    return txResponse.hash;
+    const receipt = await txResponse.wait();
+    if (receipt?.hash) {
+      return receipt.hash;
+    }
+
+    throw new Error('Transaction not succeeded');
   }
 }
