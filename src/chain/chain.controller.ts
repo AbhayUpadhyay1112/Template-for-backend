@@ -25,6 +25,7 @@ import { UpdateChainDto } from './dto/update-chain.dto';
 import {
   AccessGuard,
   AuthenticatedRequest,
+  DisableCache,
   JwtAuthGuard,
   Roles,
   RolesGuard,
@@ -36,6 +37,7 @@ import {
 @Roles(UserType.Admin)
 @Controller('chain')
 @UseGuards(JwtAuthGuard, AccessGuard, RolesGuard)
+@DisableCache()
 export class ChainController {
   constructor(private readonly chainService: ChainService) {}
 
