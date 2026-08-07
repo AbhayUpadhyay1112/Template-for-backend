@@ -6,6 +6,7 @@ import {
   IsNotEmpty,
   IsNumber,
   IsEthereumAddress,
+  Matches,
 } from 'class-validator';
 import { WalletPurpose } from 'src/generated/prisma/enums';
 
@@ -26,12 +27,15 @@ export class CreateWalletDto {
   walletName: string;
 
   @ApiProperty({
-    example: 'AWDDDUU-8688-EWWS-AAA',
-    description: 'AWS KMS KEY ID',
+    example: '9f4b7d5e-a123-4f56-9876-abcdef123456',
+    description: 'AWS KMS Key ID (UUID format)',
   })
-  @IsString()
   @IsOptional()
-  awsKeyID: string;
+  @Matches(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i, {
+    message:
+      'awsKeyID must be in UUID format (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
+  })
+  awsKeyID?: string;
 
   @ApiPropertyOptional({
     example: 'active',

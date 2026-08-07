@@ -17,6 +17,8 @@ export class AppCacheInterceptor extends CacheInterceptor {
   }
 
   protected isRequestCacheable(context: ExecutionContext): boolean {
+    if (process.env.CACHE_ENABLED === 'false') return false;
+
     const disabled = this.reflector.getAllAndOverride<boolean>(
       DISABLE_CACHE_KEY,
       [context.getHandler(), context.getClass()],
