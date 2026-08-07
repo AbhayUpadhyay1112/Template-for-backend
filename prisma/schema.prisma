@@ -205,7 +205,7 @@ model Wallet {
   id            Int      @id @default(autoincrement())
   name          String   @default("")
   walletAddress String   @default("0x05530552aa4DAB77b1bc363AAF5E6b14C053902F") @map("wallet_address")
-  awsKeyID      String?  @map("aws_key_id")
+  awsKeyID      String?  @unique @map("aws_key_id")
   status        String   @default("active")
   createdBy     Int?     @default(1) @map("created_by")
   createdAt     DateTime @default(now()) @map("created_at")

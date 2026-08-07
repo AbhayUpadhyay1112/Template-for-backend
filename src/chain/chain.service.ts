@@ -14,6 +14,12 @@ export class ChainService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(dto: CreateChainDto, userId: number) {
+    if (dto.fallbackRpc && dto.rpc === dto.fallbackRpc) {
+      throw new BadRequestException(
+        'Fallback RPC URL must be different from the Primary RPC URL.',
+      );
+    }
+
     try {
       const chain = await this.prisma.chain.create({
         data: {

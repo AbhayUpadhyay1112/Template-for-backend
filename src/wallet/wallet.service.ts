@@ -54,6 +54,14 @@ export class WalletService {
       });
       return this.formatWalletResponse(wallet);
     } catch (err) {
+      if (
+        err instanceof Prisma.PrismaClientKnownRequestError &&
+        err.code === 'P2002'
+      ) {
+        throw new BadRequestException(
+          'This AWS Key ID is already assigned to another wallet. Each wallet must have a unique AWS KMS Key.',
+        );
+      }
       console.log(err);
       throw err;
     }
@@ -100,6 +108,14 @@ export class WalletService {
       });
       return this.formatWalletResponse(wallet);
     } catch (err) {
+      if (
+        err instanceof Prisma.PrismaClientKnownRequestError &&
+        err.code === 'P2002'
+      ) {
+        throw new BadRequestException(
+          'This AWS Key ID is already assigned to another wallet. Each wallet must have a unique AWS KMS Key.',
+        );
+      }
       console.log(err);
       throw err;
     }
