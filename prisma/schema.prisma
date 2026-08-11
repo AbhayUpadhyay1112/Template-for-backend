@@ -326,7 +326,7 @@ model Watcher {
   name             String
   description      String
   type             WatcherType       @default(minUintThreshold)
-  threshold        Decimal?          @map("threshold")
+  threshold        Decimal?          @map("threshold") @db.Decimal()
   lastRunAt        DateTime?         @map("last_run_at")
   nextRunAt        DateTime?         @map("next_run_at")
   notifiedAt       DateTime?         @map("notified_at")

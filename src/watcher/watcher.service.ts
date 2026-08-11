@@ -23,6 +23,7 @@ const WATCHER_SELECT = {
   walletId: true,
   actionId: true,
   lastRunAt: true,
+  nextRunAt: true,
   createdBy: true,
   updatedBy: true,
   createdAt: true,
@@ -124,6 +125,8 @@ export class WatcherService implements OnApplicationBootstrap {
             data,
           );
 
+          console.log(response);
+
           const outcome = response[0];
 
           let notification: any = null;
@@ -135,7 +138,7 @@ export class WatcherService implements OnApplicationBootstrap {
             dayjs().subtract(1, 'hour').isAfter(watcher.notifiedAt);
 
           if (
-            BigInt(watcher.threshold?.toString() || '0') <= BigInt(outcome) &&
+            BigInt(watcher.threshold?.toString() || '0') >= BigInt(outcome) &&
             notifyWindowEnabled
           ) {
             notificationType = 'Error';
@@ -145,7 +148,10 @@ export class WatcherService implements OnApplicationBootstrap {
               message: 'Bachao...',
               watcherId: watcher.id,
             };
-          } else if (watcher.notificationType === 'Error') {
+          } else if (
+            watcher.notificationType === 'Error' &&
+            BigInt(watcher.threshold?.toString() || '0') < BigInt(outcome)
+          ) {
             notificationType = 'Info';
             resetWatcherNotification = true;
             notification = {
@@ -183,9 +189,11 @@ export class WatcherService implements OnApplicationBootstrap {
               },
             });
 
-            await tx.notification.create({
-              data: notification,
-            });
+            if (notification) {
+              await tx.notification.create({
+                data: notification,
+              });
+            }
           });
         } catch (err) {
           console.error(err);
