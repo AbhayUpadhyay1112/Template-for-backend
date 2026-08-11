@@ -12,7 +12,8 @@ import { KMSEVMSigner } from 'src/kms-evm-signer';
 import { WalletActionDTO } from './dto/wallet-action.dto';
 import { ethers } from 'ethers';
 import { UtilsService } from '@Common';
-type CallMetaData = {
+
+export type CallMetaData = {
   contractAddress: string;
   abi: Record<string, unknown>;
   defaultValues?: any;
@@ -227,7 +228,7 @@ export class WalletService {
         to: callMetaData.contractAddress,
         data: callData,
       });
-      const response = await contractObject.interface.decodeFunctionResult(
+      const response = contractObject.interface.decodeFunctionResult(
         callMetaData.abi.name as string,
         data,
       );

@@ -202,15 +202,16 @@ enum WalletPurpose {
 }
 
 model Wallet {
-  id            Int      @id @default(autoincrement())
-  name          String   @default("")
-  walletAddress String   @default("0x05530552aa4DAB77b1bc363AAF5E6b14C053902F") @map("wallet_address")
-  awsKeyID      String?  @unique @map("aws_key_id")
-  status        String   @default("active")
-  createdBy     Int?     @default(1) @map("created_by")
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedBy     Int?     @map("updated_by")
-  updatedAt     DateTime @updatedAt @map("updated_at")
+  id            Int       @id @default(autoincrement())
+  name          String    @default("")
+  walletAddress String    @default("0x05530552aa4DAB77b1bc363AAF5E6b14C053902F") @map("wallet_address")
+  awsKeyID      String?   @unique @map("aws_key_id")
+  status        String    @default("active")
+  createdBy     Int?      @default(1) @map("created_by")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedBy     Int?      @map("updated_by")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  watchers      Watcher[]
 
   @@map("wallet")
 }
@@ -302,6 +303,59 @@ model Action {
   createdAt    DateTime   @default(now()) @map("created_at")
   updatedBy    Int?       @map("updated_by")
   updatedAt    DateTime   @updatedAt @map("updated_at")
+  watchers     Watcher[]
 
   @@map("action")
+}
+
+enum WatcherType {
+  minUintThreshold @map("min_uint_threshold")
+
+  @@map("watcher_type")
+}
+
+enum NotificationType {
+  Info  @map("info")
+  Error @map("error")
+
+  @@map("notification_type")
+}
+
+model Watcher {
+  id               Int               @id @default(autoincrement())
+  name             String
+  description      String
+  type             WatcherType       @default(minUintThreshold)
+  threshold        Decimal?          @map("threshold")
+  lastRunAt        DateTime?         @map("last_run_at")
+  nextRunAt        DateTime?         @map("next_run_at")
+  notifiedAt       DateTime?         @map("notified_at")
+  callParams       Json?             @map("call_params")
+  notificationType NotificationType? @map("notification_type")
+  frequency        Int               @default(60)
+  status           String            @default("active")
+  createdBy        Int?              @default(1) @map("created_by")
+  createdAt        DateTime          @default(now()) @map("created_at")
+  updatedBy        Int?              @map("updated_by")
+  updatedAt        DateTime          @updatedAt @map("updated_at")
+  wallet           Wallet            @relation(fields: [walletId], references: [id])
+  walletId         Int
+  action           Action            @relation(fields: [actionId], references: [id])
+  actionId         Int
+  notifications    Notification[]
+
+  @@unique([walletId, actionId])
+  @@map("watcher")
+}
+
+model Notification {
+  id        Int              @id @default(autoincrement())
+  title     String
+  message   String
+  type      NotificationType @default(Info)
+  createdAt DateTime         @default(now()) @map("created_at")
+  watcher   Watcher?         @relation(fields: [watcherId], references: [id])
+  watcherId Int?             @map("watcher_id")
+
+  @@map("notification")
 }
