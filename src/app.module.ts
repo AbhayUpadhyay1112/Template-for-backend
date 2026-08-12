@@ -19,6 +19,7 @@ import { AssetModule } from './asset/asset.module';
 import { PlatformModule } from './platform/platform.module';
 import { ChainModule } from './chain/chain.module';
 import { ActionModule } from './action/action.module';
+import { WatcherModule } from './watcher/watcher.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { ActionModule } from './action/action.module';
     PlatformModule,
     ChainModule,
     ActionModule,
+    WatcherModule,
   ],
   controllers: [AppController],
   providers: [
