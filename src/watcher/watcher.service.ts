@@ -144,8 +144,8 @@ export class WatcherService implements OnApplicationBootstrap {
             notificationType = 'Error';
             notification = {
               type: 'Error',
-              title: 'Problem',
-              message: 'Bachao...',
+              title: `${watcher.name} - Threshold Breach`,
+              message: `Value is below the threshold. Current value: ${outcome}, Threshold: ${watcher.threshold}`,
               watcherId: watcher.id,
             };
           } else if (
@@ -156,8 +156,8 @@ export class WatcherService implements OnApplicationBootstrap {
             resetWatcherNotification = true;
             notification = {
               type: 'Info',
-              title: 'Resolved',
-              message: 'I am fine...',
+              title: `${watcher.name} - Threshold Resolved`,
+              message: `Value is above the threshold. Current value: ${outcome}, Threshold: ${watcher.threshold}`,
               watcherId: watcher.id,
             };
           }

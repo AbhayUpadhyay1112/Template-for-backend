@@ -20,6 +20,7 @@ import { PlatformModule } from './platform/platform.module';
 import { ChainModule } from './chain/chain.module';
 import { ActionModule } from './action/action.module';
 import { WatcherModule } from './watcher/watcher.module';
+import { NotificationModule } from './notification/notification.module';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { WatcherModule } from './watcher/watcher.module';
     ChainModule,
     ActionModule,
     WatcherModule,
+    NotificationModule,
   ],
   controllers: [AppController],
   providers: [

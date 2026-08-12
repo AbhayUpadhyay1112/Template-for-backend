@@ -81,6 +81,18 @@ export class ActionService {
 
     return actions;
   }
+
+  async findOne(id: number) {
+    const action = await this.prisma.action.findUnique({
+      where: { id },
+      include: {
+        chain: true,
+      },
+    });
+
+    return action;
+  }
+
   async update(id: number, data: UpdateActionDto) {
     return await this.prisma.action.update({
       data: {
