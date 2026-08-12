@@ -65,4 +65,10 @@ export class CreateWatcherDto {
   @IsInt()
   @IsPositive()
   actionId: number;
+
+  @ApiPropertyOptional({
+    description: 'Call parameters for smart contract call',
+  })
+  @IsOptional()
+  callParams?: any;
 }

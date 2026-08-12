@@ -3,6 +3,7 @@ import {
   Get,
   Param,
   ParseIntPipe,
+  Patch,
   Query,
   UseGuards,
 } from '@nestjs/common';
@@ -44,5 +45,15 @@ export class NotificationController {
   @ApiResponse({ status: 200, description: 'Return notification by ID' })
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.notificationService.findOne(id);
+  }
+
+  @Patch(':id/read')
+  @ApiOperation({ summary: 'Mark notification as read' })
+  @ApiResponse({
+    status: 200,
+    description: 'Notification marked as read',
+  })
+  readNotification(@Param('id', ParseIntPipe) id: number) {
+    return this.notificationService.readNotification(id);
   }
 }

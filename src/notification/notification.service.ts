@@ -58,4 +58,16 @@ export class NotificationService {
       },
     });
   }
+
+  async readNotification(id: number) {
+    return this.prisma.notification.update({
+      where: { id },
+      data: {
+        isRead: true,
+      },
+      include: {
+        watcher: true,
+      },
+    });
+  }
 }

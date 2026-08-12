@@ -28,7 +28,6 @@ import { NodeResponseDto } from './dto/node-response.dto';
 import {
   AccessGuard,
   AuthenticatedRequest,
-  BaseController,
   DisableCache,
   JwtAuthGuard,
   Roles,

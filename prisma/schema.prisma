@@ -353,6 +353,7 @@ model Notification {
   title     String
   message   String
   type      NotificationType @default(Info)
+  isRead    Boolean          @default(false) @map("is_read")
   createdAt DateTime         @default(now()) @map("created_at")
   watcher   Watcher?         @relation(fields: [watcherId], references: [id])
   watcherId Int?             @map("watcher_id")

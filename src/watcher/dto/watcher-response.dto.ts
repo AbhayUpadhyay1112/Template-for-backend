@@ -35,6 +35,9 @@ export class WatcherResponseDto {
   @ApiPropertyOptional()
   updatedBy?: number | null;
 
+  @ApiPropertyOptional()
+  callParams?: any;
+
   @ApiProperty()
   createdAt: Date;
 
