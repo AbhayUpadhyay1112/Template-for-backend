@@ -25,6 +25,7 @@ import { UpdateWalletDto } from './dto/update-wallet.dto';
 import {
   AccessGuard,
   AuthenticatedRequest,
+  DisableCache,
   JwtAuthGuard,
   Roles,
   RolesGuard,
@@ -38,6 +39,7 @@ import { WalletActionDTO } from './dto/wallet-action.dto';
 @Roles(UserType.Admin)
 @Controller('wallet')
 @UseGuards(JwtAuthGuard, AccessGuard, RolesGuard)
+@DisableCache()
 export class WalletController {
   constructor(private readonly walletService: WalletService) {}
 

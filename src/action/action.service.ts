@@ -99,6 +99,7 @@ export class ActionService {
         actionName: data.actionName,
         description: data.description,
         remarks: data.remarks,
+        chainID: data.chainID,
         actionType: data.actionType,
         auto: data.auto,
         status: data.status,

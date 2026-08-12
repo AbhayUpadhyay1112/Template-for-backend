@@ -9,7 +9,7 @@ export const appConfigFactory = registerAs('app', () => ({
   serverUrl: process.env.SERVER_URL,
   appUri: process.env.APP_URI,
   httpPayloadMaxSize: '20mb',
-  cacheTtl: 60000,
+  cacheTtl: 1000,
   cacheEnabled: process.env.CACHE_ENABLED !== 'false',
   name: process.env.APP_NAME,
   shortName: process.env.APP_SHORT_NAME,

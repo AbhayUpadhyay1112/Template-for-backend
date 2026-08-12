@@ -25,6 +25,7 @@ import { UpdateAssetDto } from './dto/update-asset.dto';
 import {
   AccessGuard,
   AuthenticatedRequest,
+  DisableCache,
   JwtAuthGuard,
   Roles,
   RolesGuard,
@@ -36,6 +37,7 @@ import {
 @Roles(UserType.Admin)
 @Controller('asset')
 @UseGuards(JwtAuthGuard, AccessGuard, RolesGuard)
+@DisableCache()
 export class AssetController {
   constructor(private readonly assetService: AssetService) {}
 

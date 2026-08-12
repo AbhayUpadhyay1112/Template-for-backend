@@ -25,6 +25,7 @@ import { UpdatePlatformDto } from './dto/update-platform.dto';
 import {
   AccessGuard,
   AuthenticatedRequest,
+  DisableCache,
   JwtAuthGuard,
   Roles,
   RolesGuard,
@@ -36,6 +37,7 @@ import {
 @Roles(UserType.Admin)
 @Controller('platform')
 @UseGuards(JwtAuthGuard, AccessGuard, RolesGuard)
+@DisableCache()
 export class PlatformController {
   constructor(private readonly platformService: PlatformService) {}
 
