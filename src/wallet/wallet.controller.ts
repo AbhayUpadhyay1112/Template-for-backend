@@ -31,7 +31,7 @@ import {
   RolesGuard,
   UserType,
 } from '@Common';
-import { CreateTransactionDto } from './dto/create-transaction.dto';
+
 import { WalletActionDTO } from './dto/wallet-action.dto';
 
 @ApiTags('Wallet')

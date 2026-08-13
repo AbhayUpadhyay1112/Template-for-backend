@@ -7,7 +7,7 @@ import { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateWalletDto } from './dto/create-wallet.dto';
 import { UpdateWalletDto } from './dto/update-wallet.dto';
-import { CreateTransactionDto } from './dto/create-transaction.dto';
+
 import { KMSEVMSigner } from 'src/kms-evm-signer';
 import { WalletActionDTO } from './dto/wallet-action.dto';
 import { ethers } from 'ethers';
