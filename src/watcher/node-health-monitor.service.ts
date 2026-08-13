@@ -1,4 +1,4 @@
-﻿import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
+import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { PrismaService } from '../prisma/prisma.service';
 import { NodesService } from '../node/node.service';
@@ -92,8 +92,9 @@ export class NodeHealthMonitorService implements OnApplicationBootstrap {
       let notificationType: NotificationType | null = null;
       let resetNodeNotification: boolean = false;
 
+      // HEALTHY or NULL (first run) -> bad state: create Warning notification
       if (
-        previousHealthStatus === 'healthy' &&
+        (previousHealthStatus === 'healthy' || previousHealthStatus === null) &&
         (currentHealthStatus === 'unhealthy' ||
           currentHealthStatus === 'offline')
       ) {
