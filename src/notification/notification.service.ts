@@ -16,6 +16,7 @@ export class NotificationService {
       const data = await this.prisma.notification.findMany({
         include: {
           watcher: true,
+          node: true,
         },
         orderBy: {
           createdAt: 'desc',
@@ -36,6 +37,7 @@ export class NotificationService {
       take,
       include: {
         watcher: true,
+        node: true,
       },
       orderBy: {
         createdAt: 'desc',
@@ -55,6 +57,7 @@ export class NotificationService {
       where: { id },
       include: {
         watcher: true,
+        node: true,
       },
     });
   }

@@ -175,20 +175,23 @@ enum NodeTag {
 }
 
 model Node {
-  id              Int      @id @default(autoincrement())
+  id              Int            @id @default(autoincrement())
   type            String
   network         String
   name            String
-  url             String   @unique
-  thumbnailImage  String?  @map("thumbnail_image")
-  minerAddress    String?  @map("consensus_address")
-  contractAddress String?  @map("validator_address")
-  operatorAddress String?  @map("operator_address")
-  status          String   @default("active")
-  tag             NodeTag  @default(Other)
-  createdBy       Int?     @default(1)
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
+  url             String         @unique
+  thumbnailImage  String?        @map("thumbnail_image")
+  minerAddress    String?        @map("consensus_address")
+  contractAddress String?        @map("validator_address")
+  operatorAddress String?        @map("operator_address")
+  status          String         @default("active")
+  tag             NodeTag        @default(Other)
+  healthStatus    String?        @map("health_status")
+  healthCheckedAt DateTime?      @map("health_checked_at")
+  createdBy       Int?           @default(1)
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
+  notifications   Notification[]
 
   @@map("node")
 }
@@ -315,8 +318,9 @@ enum WatcherType {
 }
 
 enum NotificationType {
-  Info  @map("info")
-  Error @map("error")
+  Info    @map("info")
+  Error   @map("error")
+  Warning @map("warning")
 
   @@map("notification_type")
 }
@@ -357,6 +361,8 @@ model Notification {
   createdAt DateTime         @default(now()) @map("created_at")
   watcher   Watcher?         @relation(fields: [watcherId], references: [id])
   watcherId Int?             @map("watcher_id")
+  node      Node?            @relation(fields: [nodeId], references: [id], onDelete: SetNull)
+  nodeId    Int?             @map("node_id")
 
   @@map("notification")
 }
