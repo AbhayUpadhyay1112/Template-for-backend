@@ -19,7 +19,7 @@ export class NodeHealthMonitorService implements OnApplicationBootstrap {
     this.handleNodeHealthCheck();
   }
 
-  @Cron('0 */3 * * * *', { name: 'node-health-check' })
+  @Cron('0 * * * * *', { name: 'node-health-check' })
   async handleNodeHealthCheck(): Promise<void> {
     if (this.isRunning) {
       this.logger.warn(
@@ -92,15 +92,15 @@ export class NodeHealthMonitorService implements OnApplicationBootstrap {
       let notificationType: NotificationType | null = null;
       let resetNodeNotification: boolean = false;
 
-      // HEALTHY or NULL (first run) -> bad state: create Warning notification
+      // HEALTHY or NULL (first run) -> bad state: create Error notification
       if (
         (previousHealthStatus === 'healthy' || previousHealthStatus === null) &&
         (currentHealthStatus === 'unhealthy' ||
           currentHealthStatus === 'offline')
       ) {
-        notificationType = NotificationType.Warning;
+        notificationType = NotificationType.Error;
         notification = {
-          type: NotificationType.Warning,
+          type: NotificationType.Error,
           title:
             currentHealthStatus === 'offline'
               ? `Node Offline: ${node.name}`

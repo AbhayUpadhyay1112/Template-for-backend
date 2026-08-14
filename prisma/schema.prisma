@@ -318,9 +318,8 @@ enum WatcherType {
 }
 
 enum NotificationType {
-  Info    @map("info")
-  Error   @map("error")
-  Warning @map("warning")
+  Info  @map("info")
+  Error @map("error")
 
   @@map("notification_type")
 }
