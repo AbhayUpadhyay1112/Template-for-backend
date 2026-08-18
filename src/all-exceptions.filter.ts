@@ -21,22 +21,45 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
       const ctx = host.switchToHttp();
 
-      const httpStatus =
+      let httpStatus =
         exception instanceof HttpException
           ? exception.getStatus()
           : HttpStatus.INTERNAL_SERVER_ERROR;
 
       // TODO: Create DTO to transmit the error response to the client
-      const responseBody =
-        exception instanceof HttpException
-          ? exception.getResponse()
-          : {
-              status: httpStatus,
-              message:
-                exception instanceof Error && !isAxiosError(exception)
-                  ? exception.message
-                  : 'Internal server error',
-            };
+      let responseBody: any;
+
+      if (exception instanceof HttpException) {
+        responseBody = exception.getResponse();
+      } else {
+        const rawMessage =
+          exception instanceof Error && !isAxiosError(exception)
+            ? exception.message
+            : 'Internal server error';
+
+        const isKmsAccessDenied =
+          (exception as any)?.name === 'AccessDeniedException' ||
+          (exception as any)?.name === 'UnauthorizedException' ||
+          rawMessage.includes('is not authorized to perform: kms:') ||
+          (rawMessage.includes('kms:') &&
+            rawMessage.includes('not authorized')) ||
+          (rawMessage.includes('AccessDenied') && rawMessage.includes('kms'));
+
+        if (isKmsAccessDenied) {
+          httpStatus = HttpStatus.FORBIDDEN;
+          responseBody = {
+            statusCode: HttpStatus.FORBIDDEN,
+            message:
+              'Access denied: You don’t have permission to use this encryption key.',
+            error: 'Forbidden',
+          };
+        } else {
+          responseBody = {
+            status: httpStatus,
+            message: rawMessage,
+          };
+        }
+      }
 
       httpAdapter.reply(ctx.getResponse(), responseBody, httpStatus);
     }

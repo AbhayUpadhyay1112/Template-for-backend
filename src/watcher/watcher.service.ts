@@ -126,8 +126,6 @@ export class WatcherService implements OnApplicationBootstrap {
             data,
           );
 
-          console.log(response);
-
           const outcome = response[0];
 
           let notification: any = null;

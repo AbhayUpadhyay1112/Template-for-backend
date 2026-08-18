@@ -12,7 +12,7 @@ import {
   recoverAddress,
 } from 'ethers';
 import BN from 'bn.js';
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, ForbiddenException } from '@nestjs/common';
 import { kmsEvmConigFactory } from '@Config';
 import { ConfigType } from '@nestjs/config';
 
@@ -74,24 +74,47 @@ export class KMSEVMSigner {
     return KMSEVMSigner.clientCache.get(this.config.region)!;
   }
 
+  private handleKmsError(error: any): never {
+    const message = error?.message || '';
+    const name = error?.name || '';
+
+    if (
+      name === 'AccessDeniedException' ||
+      name === 'UnauthorizedException' ||
+      message.includes('is not authorized to perform: kms:') ||
+      message.includes('AccessDenied') ||
+      message.includes('not authorized to perform')
+    ) {
+      throw new ForbiddenException(
+        'Access denied: You don’t have permission to use this encryption key.',
+      );
+    }
+
+    throw error;
+  }
+
   /**
    * Derive the Ethereum address controlled by this KMS key.
    */
   async getAddress(customKeyID?: string): Promise<string> {
-    const kms = this.getKmsClient();
-    const res = await kms.send(
-      new GetPublicKeyCommand({ KeyId: customKeyID || this.config.KEY_ID }),
-    );
+    try {
+      const kms = this.getKmsClient();
+      const res = await kms.send(
+        new GetPublicKeyCommand({ KeyId: customKeyID || this.config.KEY_ID }),
+      );
 
-    if (!res.PublicKey) {
-      throw new Error('KMS did not return a public key');
+      if (!res.PublicKey) {
+        throw new Error('KMS did not return a public key');
+      }
+
+      const derPubKey = Buffer.from(res.PublicKey);
+      const rawPubKey = derPubKey.slice(-65); // uncompressed EC point
+      const pubKeyNoPrefix = rawPubKey.slice(1); // drop 0x04 prefix
+      const hash = keccak256(pubKeyNoPrefix);
+      return '0x' + hash.slice(-40);
+    } catch (err) {
+      this.handleKmsError(err);
     }
-
-    const derPubKey = Buffer.from(res.PublicKey);
-    const rawPubKey = derPubKey.slice(-65); // uncompressed EC point
-    const pubKeyNoPrefix = rawPubKey.slice(1); // drop 0x04 prefix
-    const hash = keccak256(pubKeyNoPrefix);
-    return '0x' + hash.slice(-40);
   }
 
   private parseDerSignature(der: Buffer): DerSignature {
@@ -119,16 +142,21 @@ export class KMSEVMSigner {
     expectedAddress,
     keyId,
   }: KmsSignDigestParams): Promise<Signature> {
-    const kms = this.getKmsClient();
+    let signRes;
+    try {
+      const kms = this.getKmsClient();
 
-    const signRes = await kms.send(
-      new SignCommand({
-        KeyId: keyId || this.config.KEY_ID,
-        Message: digestBuf,
-        MessageType: 'DIGEST',
-        SigningAlgorithm: 'ECDSA_SHA_256',
-      }),
-    );
+      signRes = await kms.send(
+        new SignCommand({
+          KeyId: keyId || this.config.KEY_ID,
+          Message: digestBuf,
+          MessageType: 'DIGEST',
+          SigningAlgorithm: 'ECDSA_SHA_256',
+        }),
+      );
+    } catch (err) {
+      this.handleKmsError(err);
+    }
 
     if (!signRes.Signature) {
       throw new Error('KMS did not return a signature');
