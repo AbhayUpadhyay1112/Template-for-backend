@@ -86,7 +86,7 @@ export class KMSEVMSigner {
       message.includes('not authorized to perform')
     ) {
       throw new ForbiddenException(
-        'Access denied: You don’t have permission to use this encryption key.',
+        'Access denied: You don’t have permission to use this encrypted key.',
       );
     }
 

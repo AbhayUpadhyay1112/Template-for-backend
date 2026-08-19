@@ -48,7 +48,7 @@ export class WalletService {
         data: {
           name: dto.walletName,
           walletAddress: dto.walletAddress,
-          awsKeyID: dto.awsKeyID,
+          awsKeyID: dto.awsKeyID || null,
           status: dto.status,
           createdBy: userId,
         },
@@ -102,7 +102,7 @@ export class WalletService {
         data: {
           name: dto.walletName,
           walletAddress: dto.walletAddress,
-          awsKeyID: dto.awsKeyID,
+          awsKeyID: dto.awsKeyID || null,
           status: dto.status,
           updatedBy: userId,
         },

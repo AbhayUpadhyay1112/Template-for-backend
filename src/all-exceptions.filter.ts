@@ -50,7 +50,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
           responseBody = {
             statusCode: HttpStatus.FORBIDDEN,
             message:
-              'Access denied: You don’t have permission to use this encryption key.',
+              'Access denied: You don’t have permission to use this encrypted key.',
             error: 'Forbidden',
           };
         } else {

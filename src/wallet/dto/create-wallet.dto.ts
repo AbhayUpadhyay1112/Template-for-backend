@@ -2,13 +2,12 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsString,
   IsOptional,
-  IsEnum,
   IsNotEmpty,
-  IsNumber,
   IsEthereumAddress,
   Matches,
+  ValidateIf,
 } from 'class-validator';
-import { WalletPurpose } from 'src/generated/prisma/enums';
+import { Transform } from 'class-transformer';
 
 export class CreateWalletDto {
   @ApiProperty({
@@ -26,11 +25,15 @@ export class CreateWalletDto {
   @IsNotEmpty()
   walletName: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     example: '9f4b7d5e-a123-4f56-9876-abcdef123456',
     description: 'AWS KMS Key ID (UUID format)',
   })
   @IsOptional()
+  @Transform(({ value }) =>
+    value === '' || value === null ? undefined : value,
+  )
+  @ValidateIf((o, value) => Boolean(value))
   @Matches(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i, {
     message:
       'awsKeyID must be in UUID format (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)',
