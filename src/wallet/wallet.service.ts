@@ -185,77 +185,98 @@ export class WalletService {
     if (!chain) {
       throw new NotFoundException(`Chain with id ${chainID} not found`);
     }
-    //create provider
+
+    // create provider
     const { rpc } = chain;
     const provider = new ethers.JsonRpcProvider(rpc);
-    //check actionType
-    let callMetaData = action.callMetaData as CallMetaData;
 
-    //check if CallMetaData is String or JSON, if String Parse JSON
-    if (
-      callMetaData == null &&
-      this.utilsService.isJSONString(callMetaData as unknown as string)
-    ) {
-      throw new NotFoundException(
-        `Action was Created with wrong Call Meta data was not as per standard`,
-      );
-    }
-    if (typeof callMetaData == 'string') {
-      callMetaData = JSON.parse(callMetaData);
-    }
-    if (!callMetaData.contractAddress) {
-      throw new NotFoundException(
-        `Action was Created with wrong Call Meta data, Contract Address Not found`,
-      );
-    }
-    if (!callMetaData.abi) {
-      throw new NotFoundException(
-        `Action was Created with wrong Call Meta data, Contract Address Not found`,
-      );
+    // ─── EOA: No contract / callMetaData needed ───────────────────────────────
+    if (action.callType === 'EOA') {
+      if (action.actionType === 'Read') {
+        // Native coin balance (e.g. BNB, ETH)
+        const balance = await provider.getBalance(wallet.walletAddress);
+        return { status: true, response: ethers.formatEther(balance) };
+      } else if (action.actionType === 'Write') {
+        throw new BadRequestException(
+          `EOA Write action is not implemented yet`,
+        );
+      } else {
+        throw new BadRequestException(
+          `Unsupported action type: ${action.actionType}`,
+        );
+      }
     }
 
-    if (action.actionType === 'Read') {
-      const contractObject = new ethers.Contract(
-        callMetaData.contractAddress,
-        [callMetaData.abi],
-        provider,
-      );
-      const callData = contractObject.interface.encodeFunctionData(
-        callMetaData.abi.name as string,
-        dto.data,
-      );
-      const data = await provider.call({
-        to: callMetaData.contractAddress,
-        data: callData,
-      });
-      const response = contractObject.interface.decodeFunctionResult(
-        callMetaData.abi.name as string,
-        data,
-      );
-      return { status: true, response };
-    } else if (action.actionType === 'Write') {
-      //handle write actions
+    // ─── SC: Contract metadata required ──────────────────────────────────────
+    if (action.callType === 'SC') {
+      let callMetaData = action.callMetaData as CallMetaData;
 
-      const contractObject = new ethers.Contract(
-        callMetaData.contractAddress,
-        [callMetaData.abi],
-        provider,
-      );
-      const callData = contractObject.interface.encodeFunctionData(
-        callMetaData.abi.name as string,
-        dto.data,
-      );
+      // If callMetaData is null/missing, reject early
+      if (callMetaData == null) {
+        throw new NotFoundException(
+          `Action was Created with wrong Call Meta data, callMetaData is required for SC call type`,
+        );
+      }
 
-      const sendTransaction = await this.KMSEVMSigner.sendRawTransaction({
-        rpcUrl: rpc,
-        to: callMetaData.contractAddress,
-        value: 0n,
-        data: callData,
-        chainId: chain.chainId,
-        awsKeyId: wallet?.awsKeyID || '',
-      });
+      // If stored as a JSON string, parse it
+      if (typeof callMetaData === 'string') {
+        callMetaData = JSON.parse(callMetaData);
+      }
 
-      return { status: true, transaction: sendTransaction };
+      if (!callMetaData.contractAddress) {
+        throw new NotFoundException(
+          `Action was Created with wrong Call Meta data, Contract Address Not found`,
+        );
+      }
+      if (!callMetaData.abi) {
+        throw new NotFoundException(
+          `Action was Created with wrong Call Meta data, ABI Not found`,
+        );
+      }
+
+      if (action.actionType === 'Read') {
+        const contractObject = new ethers.Contract(
+          callMetaData.contractAddress,
+          [callMetaData.abi],
+          provider,
+        );
+        const callData = contractObject.interface.encodeFunctionData(
+          callMetaData.abi.name as string,
+          dto.data,
+        );
+        const data = await provider.call({
+          to: callMetaData.contractAddress,
+          data: callData,
+        });
+        const response = contractObject.interface.decodeFunctionResult(
+          callMetaData.abi.name as string,
+          data,
+        );
+        return { status: true, response };
+      } else if (action.actionType === 'Write') {
+        const contractObject = new ethers.Contract(
+          callMetaData.contractAddress,
+          [callMetaData.abi],
+          provider,
+        );
+        const callData = contractObject.interface.encodeFunctionData(
+          callMetaData.abi.name as string,
+          dto.data,
+        );
+
+        const sendTransaction = await this.KMSEVMSigner.sendRawTransaction({
+          rpcUrl: rpc,
+          to: callMetaData.contractAddress,
+          value: 0n,
+          data: callData,
+          chainId: chain.chainId,
+          awsKeyId: wallet?.awsKeyID || '',
+        });
+
+        return { status: true, transaction: sendTransaction };
+      }
     }
+
+    throw new BadRequestException(`Unsupported call type: ${action.callType}`);
   }
 }
