@@ -73,4 +73,11 @@ export class NotificationService {
       },
     });
   }
+
+  async readAllNotifications() {
+    return this.prisma.notification.updateMany({
+      where: { isRead: false },
+      data: { isRead: true },
+    });
+  }
 }

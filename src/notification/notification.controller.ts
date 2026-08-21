@@ -56,4 +56,14 @@ export class NotificationController {
   readNotification(@Param('id', ParseIntPipe) id: number) {
     return this.notificationService.readNotification(id);
   }
+
+  @Patch('read-all')
+  @ApiOperation({ summary: 'Mark all notifications as read' })
+  @ApiResponse({
+    status: 200,
+    description: 'All notifications marked as read',
+  })
+  readAllNotifications() {
+    return this.notificationService.readAllNotifications();
+  }
 }
