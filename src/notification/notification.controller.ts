@@ -47,8 +47,25 @@ export class NotificationController {
     return this.notificationService.findOne(id);
   }
 
+  @Patch('read-all')
+  @ApiOperation({ summary: 'Mark all notifications as read' })
+  @ApiResponse({
+    status: 200,
+    description: 'All notifications marked as read',
+    schema: {
+      example: {
+        success: true,
+        message: '5 notification(s) marked as read',
+        updatedCount: 5,
+      },
+    },
+  })
+  readAllNotifications() {
+    return this.notificationService.readAllNotifications();
+  }
+
   @Patch(':id/read')
-  @ApiOperation({ summary: 'Mark notification as read' })
+  @ApiOperation({ summary: 'Mark notification as read by ID' })
   @ApiResponse({
     status: 200,
     description: 'Notification marked as read',

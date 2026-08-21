@@ -73,4 +73,17 @@ export class NotificationService {
       },
     });
   }
+
+  async readAllNotifications() {
+    const result = await this.prisma.notification.updateMany({
+      where: { isRead: false },
+      data: { isRead: true },
+    });
+
+    return {
+      success: true,
+      message: `${result.count} notification(s) marked as read`,
+      updatedCount: result.count,
+    };
+  }
 }
