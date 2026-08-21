@@ -45,6 +45,20 @@ export class AllExceptionsFilter implements ExceptionFilter {
             rawMessage.includes('not authorized')) ||
           (rawMessage.includes('AccessDenied') && rawMessage.includes('kms'));
 
+        // Blockchain / ERC-20 error check
+        const err = exception as any;
+        const revertReason: string =
+          err?.reason ||
+          err?.revert?.args?.[0] ||
+          err?.error?.reason ||
+          rawMessage ||
+          '';
+
+        const isInsufficientAllowance =
+          (err?.code === 'CALL_EXCEPTION' ||
+            rawMessage.startsWith('execution reverted')) &&
+          revertReason.toLowerCase().includes('allowance');
+
         if (isKmsAccessDenied) {
           httpStatus = HttpStatus.FORBIDDEN;
           responseBody = {
@@ -52,6 +66,13 @@ export class AllExceptionsFilter implements ExceptionFilter {
             message:
               'Access denied: You don’t have permission to use this encrypted key.',
             error: 'Forbidden',
+          };
+        } else if (isInsufficientAllowance) {
+          httpStatus = HttpStatus.BAD_REQUEST;
+          responseBody = {
+            statusCode: HttpStatus.BAD_REQUEST,
+            error: 'Token approval required.',
+            message: 'Allowance is insufficient. Please approve and retry.',
           };
         } else {
           responseBody = {
