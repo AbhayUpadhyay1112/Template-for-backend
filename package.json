@@ -51,7 +51,7 @@
     "db:migrate:deploy": "prisma migrate deploy"
   },
   "engines": {
-    "node": "^22"
+    "node": "24.21.0"
   },
   "dependencies": {
     "@aws-sdk/client-kms": "^3.1100.0",
